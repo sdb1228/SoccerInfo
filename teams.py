@@ -85,15 +85,9 @@ def gamesUpdate(teamId):
           field = children[1].text
           homeTeam = children[2].getchildren()[0]
           awayTeam = children[3].getchildren()[0]
-          if not awayTeam.getchildren() and not homeTeam.getchildren():
-            awayTeam = awayTeam.attrib['href'].split('/')[-1]
-            homeTeam = homeTeam.attrib['href'].split('/')[-1]
-          elif not awayTeam.getchildren():
-            homeTeam = homeTeam.attrib['href'].split('/')[-1]
-            awayTeam = awayTeam.attrib['href'].split('/')[-1]
-          else:
-            awayTeam = awayTeam.attrib['href'].split('/')[-1]
-            homeTeam = homeTeam.attrib['href'].split('/')[-1]
+          
+          awayTeam = awayTeam.attrib['href'].split('/')[-1]
+          homeTeam = homeTeam.attrib['href'].split('/')[-1]
 
           score = "".join(children[4].text.split()).split("-") 
           if score[0]:
