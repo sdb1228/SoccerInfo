@@ -1,6 +1,5 @@
 from lxml import html
-import requests,json,httplib,urllib
-import time
+import requests,json,httplib,urllib,time
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
@@ -87,14 +86,14 @@ def gamesUpdate(teamId):
           homeTeam = children[2].getchildren()[0]
           awayTeam = children[3].getchildren()[0]
           if not awayTeam.getchildren() and not homeTeam.getchildren():
-            awayTeam = awayTeam.text
-            homeTeam = homeTeam.text
+            awayTeam = awayTeam.attrib['href'].split('/')[-1]
+            homeTeam = homeTeam.attrib['href'].split('/')[-1]
           elif not awayTeam.getchildren():
-            homeTeam = homeTeam.getchildren()[0].text
-            awayTeam = awayTeam.text
+            homeTeam = homeTeam.attrib['href'].split('/')[-1]
+            awayTeam = awayTeam.attrib['href'].split('/')[-1]
           else:
-            awayTeam = awayTeam.getchildren()[0].text
-            homeTeam = homeTeam.text
+            awayTeam = awayTeam.attrib['href'].split('/')[-1]
+            homeTeam = homeTeam.attrib['href'].split('/')[-1]
 
           score = "".join(children[4].text.split()).split("-") 
           if score[0]:
