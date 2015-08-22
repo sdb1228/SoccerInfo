@@ -101,9 +101,7 @@ def gamesUpdate(teamId):
             "date": date,
             "field": field,
             "homeTeam": homeTeam,
-            "awayTeam": awayTeam,
-            "homeTeamScore": homeTeamScore,
-            "awayTeamScore": awayTeamScore})})
+            "awayTeam": awayTeam})})
           connection.request('GET', '/1/classes/Games?%s' % params,'', {
                  "X-Parse-Application-Id": applicationId,
                  "X-Parse-REST-API-Key": apiKey,
