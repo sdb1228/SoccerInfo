@@ -19,6 +19,19 @@ def teamListUpdate():
     retries = 0
     while True:
       try:
+
+        teamPage = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % team.attrib['href'].split('/')[-1])
+        tree = html.fromstring(teamPage.text)
+        divisionHeader = tree.xpath("//*[@id='mainright']/h3")
+        divisionHeader = divisionHeader[0].text.rstrip()
+        divisionArray = divisionHeader.split(' ')
+        if len(divisionArray) < 7:
+          division = divisionArray[5]
+        else: 
+          division = divisionArray[5] + divisionArray[6]
+        
+        season = divisionArray[1]
+
         params = urllib.urlencode({"where":json.dumps({
           "teamId": team.attrib['href'].split('/')[-1]})})
         connection.request('GET', '/1/classes/Teams?%s' % params,'', {
@@ -40,6 +53,8 @@ def teamListUpdate():
         connection.request(call, '/1/classes/Teams%s' % objId, json.dumps({
                      "teamId": team.attrib['href'].split('/')[-1],
                      "name": team.text,
+                     "division": division,
+                     "season": season
                    }), {
                      "X-Parse-Application-Id": applicationId,
                      "X-Parse-REST-API-Key": apiKey,
