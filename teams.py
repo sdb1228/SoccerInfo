@@ -97,7 +97,7 @@ def gamesUpdate(teamId):
         children = game.getchildren()
         if len(children) != 7:
           date = children[0].getchildren()[0].text
-          field = children[1].text
+          field = children[1].text.strip()
           homeTeam = children[2].getchildren()[0]
           awayTeam = children[3].getchildren()[0]
           
