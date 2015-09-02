@@ -50,7 +50,6 @@ def teamListUpdate():
            # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
            objId = '/%s' % results['results'][0]['objectId']
 
-	print team.attrib['href'].split('/')[-1]
         connection.request(call, '/1/classes/Teams%s' % objId, json.dumps({
                      "teamId": team.attrib['href'].split('/')[-1],
                      "name": team.text,
@@ -182,12 +181,12 @@ def fullGameListUpdate():
   for team in teams:
     gamesUpdate(team['teamId'])
 
-runEveryHours=10
+hours=10
 
 while True:
   print "Running at: %s" % time.ctime()
   teamListUpdate()
   #gamesUpdate()
   fullGameListUpdate()
-  time.sleep(runEveryHouse*60*60)
+  time.sleep(hours*60*60)
   print "Finished run at: %s" % time.ctime()
