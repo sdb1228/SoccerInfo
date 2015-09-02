@@ -13,13 +13,12 @@ def teamListUpdate():
   tree = html.fromstring(page.text)
   # array of teams
   teamNames = tree.xpath("//a[contains(@href, '/facilities/12/teams/' )]")
-  connection = httplib.HTTPSConnection('api.parse.com', 443)
+  connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=15)
   connection.connect()
   for team in teamNames:
     retries = 0
     while True:
       try:
-
         teamPage = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % team.attrib['href'].split('/')[-1])
         tree = html.fromstring(teamPage.text)
         divisionHeader = tree.xpath("//*[@id='mainright']/h3")
@@ -68,7 +67,7 @@ def teamListUpdate():
         if retries < 5:
           print "Error retry %s..." % retries
           time.sleep(5)
-          connection = httplib.HTTPSConnection('api.parse.com', 443)
+          connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=15)
           connection.connect()
           continue
         else:
@@ -84,7 +83,7 @@ def teamListUpdate():
 #
 def gamesUpdate(teamId):
   print teamId
-  connection = httplib.HTTPSConnection('api.parse.com', 443)
+  connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=15)
   connection.connect()
   page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % teamId)
   tree = html.fromstring(page.text)
@@ -154,7 +153,7 @@ def gamesUpdate(teamId):
         if retries < 5:
 	  print "Error retry %s..." % retries
           time.sleep(5)
-          connection = httplib.HTTPSConnection('api.parse.com', 443)
+          connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=15)
           connection.connect()
           continue
         else:
