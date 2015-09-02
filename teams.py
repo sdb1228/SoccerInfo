@@ -181,6 +181,11 @@ def fullGameListUpdate():
   for team in teams:
     gamesUpdate(team['teamId'])
 
-#teamListUpdate()
-#gamesUpdate()
-fullGameListUpdate()
+runEveryHours=10
+
+while True:
+  print "Running at: %s" % time.ctime()
+  teamListUpdate()
+  #gamesUpdate()
+  fullGameListUpdate()
+  time.sleep(runEveryHouse*60*60)
