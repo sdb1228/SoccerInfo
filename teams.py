@@ -67,7 +67,7 @@ def teamListUpdate():
         if retries < 5:
           print "Error retry %s..." % retries
           time.sleep(5)
-          connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60
+          connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60)
           connection.connect()
           continue
         else:
