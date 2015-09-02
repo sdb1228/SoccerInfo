@@ -188,5 +188,4 @@ while True:
   #gamesUpdate()
   fullGameListUpdate()
   print "Finished run at: %s" % time.ctime()
-  time.sleep(120)
-  #time.sleep(hours*60*60)
+  time.sleep(hours*60*60)
