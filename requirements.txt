@@ -1,6 +1,5 @@
 lxml
 requests
-json
 httplib
 urllib
 time
