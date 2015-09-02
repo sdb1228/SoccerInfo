@@ -190,3 +190,4 @@ while True:
   #gamesUpdate()
   fullGameListUpdate()
   time.sleep(runEveryHouse*60*60)
+  print "Finished run at: %s" % time.ctime()
