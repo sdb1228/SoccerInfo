@@ -50,6 +50,7 @@ def teamListUpdate():
            # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
            objId = '/%s' % results['results'][0]['objectId']
 
+	print team.attrib['href'].split('/')[-1]
         connection.request(call, '/1/classes/Teams%s' % objId, json.dumps({
                      "teamId": team.attrib['href'].split('/')[-1],
                      "name": team.text,
