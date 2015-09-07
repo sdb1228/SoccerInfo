@@ -24,7 +24,7 @@ apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
 # To be run before 'fullUtahAdultOutdoorGameListUpdate()' to seed iterable data.
 # Scrapes the Utah Soccer Website to obtain a list of all teams currently playing outdoor and stores the team data in the 'AdultOutdoorSoccerTeams' table of the Parse DB.
 #
-def utahSoccerAdultOutdoorUpdate():
+def utahSoccerAdultOutdoorTeamsUpdate():
   page = requests.get('https://utahsoccer.org/public_get_my_team.php')
   tree = html.fromstring(page.text)
   # array of teams
@@ -35,6 +35,8 @@ def utahSoccerAdultOutdoorUpdate():
     retries = 0
     while True:
       try:
+        if team.attrib['value'] == "0":
+          break
         params = urllib.urlencode({"where":json.dumps({
           "teamId": team.attrib['value']})})
         connection.request('GET', '/1/classes/AdultOutdoorSoccerTeams?%s' % params,'', {
