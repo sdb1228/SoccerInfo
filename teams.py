@@ -215,14 +215,20 @@ def utahSoccerAdultOutdoorGamesUpdate():
         children = game.getchildren()
         if len(children) < 17:
           break
+
+        homeTeam = children[12].text
+        awayTeam = children[14].text
+        if homeTeam == "-1" or awayTeam == "-1" or homeTeam == "0" or awayTeam == "0":
+          break
+
+        realisticDate = children[4].text[-5:] + "-" + children[4].text[2] + children[4].text[3]
         gameNumber = children[2].text
-        date = children[3].text[:3] + " " + children[4].text + " " + children[5].text
+        date = children[3].text[:3] + " " + realisticDate + " " + children[5].text
         division = children[8].text
         homeTeam = children[12].text
         awayTeam = children[14].text
         field = children[16].text
-        if homeTeam == "-1" or awayTeam == "-1" or homeTeam == "0" or awayTeam == "0":
-          break
+
 
         teams = [homeTeam, awayTeam]
         utahSoccerTeamDivisionUpdate(teams, division, connection)
