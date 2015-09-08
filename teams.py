@@ -20,6 +20,46 @@ class Render(QWebPage):
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
 
+
+#
+# Updates teams division on the parse DB that play outdoor at UtahSoccer.org
+#
+def utahSoccerTeamDivisionUpdate(teamIds, division, connection):
+  newDivision = division
+  if division == "M" :
+    newDivision = "Open Cup"
+  if division == "W":
+    newDivision = "Women Open Cup"
+  for team in teamIds:
+    params = urllib.urlencode({"where":json.dumps({
+            "teamId": team})})
+    connection.request('GET', '/1/classes/AdultOutdoorSoccerTeams?%s' % params,'', {
+         "X-Parse-Application-Id": applicationId,
+         "X-Parse-REST-API-Key": apiKey,
+     })
+    results = json.loads(connection.getresponse().read())
+    # Object doesn't exist, POST to create new. 
+
+    if results.values() == [[]]:
+      return
+    # Object exists, PUT to update existing.
+    else: 
+       call = 'PUT'
+       # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
+       objId = '/%s' % results['results'][0]['objectId']
+
+    connection.request(call, '/1/classes/AdultOutdoorSoccerTeams%s' % objId, json.dumps({
+                 "teamId": team,
+                 "division": newDivision
+               }), {
+                 "X-Parse-Application-Id": applicationId,
+                 "X-Parse-REST-API-Key": apiKey,
+                 "Content-Type": "application/json"
+               })
+    results = json.loads(connection.getresponse().read())
+    print results
+
+
 #
 # To be run before 'fullUtahAdultOutdoorGameListUpdate()' to seed iterable data.
 # Scrapes the Utah Soccer Website to obtain a list of all teams currently playing outdoor and stores the team data in the 'AdultOutdoorSoccerTeams' table of the Parse DB.
@@ -104,14 +144,13 @@ def utahSoccerAdultPlayedOutdoorGamesUpdate():
           break
 
         gameNumber = children[4].text
-        date = children[2].text + " " + children[3].text
         division = children[7].text
         homeTeam = children[9].text
         homeTeamScore = children[11].text
         awayTeam = children[12].text
         awayTeamScore = children[14].text
         field = children[15].text
-        if homeTeam == "-1" or awayTeam == "-1" or homeTeam == "0" or awayTeam == "0":
+        if homeTeam == "-1" or awayTeam == "-1" or homeTeam == "0" or awayTeam == "0" or not gameNumber:
           break
 
         params = urllib.urlencode({"where":json.dumps({
@@ -132,14 +171,13 @@ def utahSoccerAdultPlayedOutdoorGamesUpdate():
            objId = '/%s' % results['results'][0]['objectId']
 
         connection.request(call, '/1/classes/AdultOutdoorSoccerGames%s' % objId, json.dumps({
-                     "date": date,
-                     "gameNumber": gameNumber,
-                     "field": field,
-                     "homeTeam": homeTeam,
-                     "awayTeam": awayTeam,
                      "division": division,
                      "homeTeamScore": homeTeamScore,
-                     "awayTeamScore": awayTeamScore
+                     "awayTeamScore": awayTeamScore,
+                     "homeTeam": homeTeam,
+                     "awayTeam": awayTeam,
+                     "field": field,
+                     "gameNumber": gameNumber
                    }), {
                      "X-Parse-Application-Id": applicationId,
                      "X-Parse-REST-API-Key": apiKey,
@@ -178,7 +216,7 @@ def utahSoccerAdultOutdoorGamesUpdate():
         if len(children) < 17:
           break
         gameNumber = children[2].text
-        date = children[3].text + " " + children[4].text + " " + children[5].text
+        date = children[3].text[:3] + " " + children[4].text + " " + children[5].text
         division = children[8].text
         homeTeam = children[12].text
         awayTeam = children[14].text
@@ -186,9 +224,11 @@ def utahSoccerAdultOutdoorGamesUpdate():
         if homeTeam == "-1" or awayTeam == "-1" or homeTeam == "0" or awayTeam == "0":
           break
 
+        teams = [homeTeam, awayTeam]
+        utahSoccerTeamDivisionUpdate(teams, division, connection)
+
         params = urllib.urlencode({"where":json.dumps({
           "gameNumber": gameNumber})})
-        print params
         connection.request('GET', '/1/classes/AdultOutdoorSoccerGames?%s' % params,'', {
                "X-Parse-Application-Id": applicationId,
                "X-Parse-REST-API-Key": apiKey,
@@ -210,9 +250,7 @@ def utahSoccerAdultOutdoorGamesUpdate():
                      "field": field,
                      "homeTeam": homeTeam,
                      "awayTeam": awayTeam,
-                     "division": division,
-                     "homeTeamScore": "",
-                     "awayTeamScore": ""
+                     "division": division
                    }), {
                      "X-Parse-Application-Id": applicationId,
                      "X-Parse-REST-API-Key": apiKey,
