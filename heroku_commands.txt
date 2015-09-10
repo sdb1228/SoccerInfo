@@ -1,0 +1,14 @@
+Stop worker: 
+  heroku ps:scale worker=0
+
+Start worker: 
+  heroku ps:scale worker=0
+
+Push remote:
+  git push heroku master
+
+Check status:
+  heroku ps
+
+View logs:
+  heroku logs --ps worker.1 --tail
