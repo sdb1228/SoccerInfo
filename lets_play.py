@@ -10,7 +10,7 @@ apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
 #
 def teamUpdate(id):
   print id
-  connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60)
+  connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
   connection.connect()
   retries = 0
   while True:
@@ -90,17 +90,17 @@ def teamListUpdate():
 # teamId : Corresponds to the teamId that the team is referenced in the Let's Play href to view team data.
 #
 def gamesUpdate(teamId):
-  print teamId
-  connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60)
-  connection.connect()
-  page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % teamId)
-  tree = html.fromstring(page.text)
-  # array of teams
-  games = tree.xpath("//tr[td]")
-  for game in games:
-    retries = 0
-    while True:
-      try:
+  retries = 0
+  while True:
+    try:
+      print teamId
+      connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+      connection.connect()
+      page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % teamId)
+      tree = html.fromstring(page.text)
+      # array of teams
+      games = tree.xpath("//tr[td]")
+      for game in games:
         children = game.getchildren()
         if len(children) != 7:
           date = children[0].getchildren()[0].text
@@ -185,19 +185,19 @@ def gamesUpdate(teamId):
           print results
         else:
           print"\n\n\n\Standings\n"
-      except Exception, e:
-        print str(e)
-        retries += 1
-        if retries < 5:
-	  print "Error retry %s..." % retries
-          time.sleep(5)
-          connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60)
-          connection.connect()
-          continue
-        else:
-          print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
-          return
-      break
+    except Exception, e:
+      print str(e)
+      retries += 1
+      if retries < 5:
+        print "Error retry %s..." % retries
+        time.sleep(5)
+        connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60)
+        connection.connect()
+        continue
+      else:
+        print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
+        return
+    break
 
 #
 # To be run AFTER 'teamListUpdate()'
