@@ -1,4 +1,4 @@
-from utah_soccer import utah_soccer_run
+#from utah_soccer import utah_soccer_run
 from lets_play import lets_play_run
 import time
 
