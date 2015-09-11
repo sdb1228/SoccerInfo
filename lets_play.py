@@ -1,5 +1,5 @@
 from lxml import html
-import requests,json,httplib,urllib,time
+import requests,json,httplib,urllib
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
@@ -63,7 +63,7 @@ def teamUpdate(id):
       if retries < 5:
         print "Error retry %s..." % retries
         time.sleep(5)
-        connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60)
+        connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
         connection.connect()
         continue
       else:
@@ -191,7 +191,7 @@ def gamesUpdate(teamId):
       if retries < 5:
         print "Error retry %s..." % retries
         time.sleep(5)
-        connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=60)
+        connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
         connection.connect()
         continue
       else:
@@ -218,12 +218,10 @@ def fullGameListUpdate():
   for team in teams:
     gamesUpdate(team['teamId'])
 
-hours=12
-
-while True:
-  print "Running at: %s" % time.ctime()
+#
+# Single method to combine all update methods for Let's Play facility.
+#
+def lets_play_run():
   teamListUpdate()
-  #gamesUpdate()
   fullGameListUpdate()
-  print "Finished run at: %s" % time.ctime()
-  time.sleep(hours*60*60)
+  #gamesUpdate()
