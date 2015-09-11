@@ -2,4 +2,3 @@ lxml
 requests
 git+git://github.com/niklasb/webkit-server.git
 xvfbwrapper
-dryscrape
