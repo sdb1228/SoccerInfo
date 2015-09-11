@@ -1,5 +1,5 @@
 from lxml import html
-import requests,json,httplib,urllib,sys,dryscrape
+import requests,json,httplib,urllib,sys,dryscrape,time
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
