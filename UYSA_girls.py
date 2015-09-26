@@ -33,7 +33,10 @@ def UYSAGirlsGamesUpdate():
 	games = tree.xpath('//tbody/tr')
 	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
 	connection.connect()
-	for game in games:
+	retries = 0
+	while True:
+	  try:
+	    for game in games:
 		children = game.getchildren()
 		if len(children) < 8:
 			continue
@@ -83,8 +86,8 @@ def UYSAGirlsGamesUpdate():
 					date = centers[centersCount]
 					date = date.getchildren()[0].text[10:]
 					arrayDate = date.split(',')
-					time = bracket.getchildren()[2].getchildren()[0].text
-					date = arrayDate[0][:3] + " " + months.get(arrayDate[1].split(' ')[2]) + "-" + arrayDate[1].split(' ')[3] + "-" + arrayDate[2][3:] + time
+					game_time = bracket.getchildren()[2].getchildren()[0].text
+					date = arrayDate[0][:3] + " " + months.get(arrayDate[1].split(' ')[2]) + "-" + arrayDate[1].split(' ')[3] + "-" + arrayDate[2][3:] + game_time
 					field = bracket.getchildren()[1].text
 					homeTeam = teamDicionary.get(bracket.getchildren()[5].text)
 					homeTeamScore = bracket.getchildren()[6].text
@@ -131,6 +134,19 @@ def UYSAGirlsGamesUpdate():
 			                    })
 			        results = json.loads(connection.getresponse().read())
 			        print results
+	  except Exception, e:
+            print str(e)
+            retries += 1
+            if retries < 5:
+              print "Error retry %s..." % retries
+              time.sleep(5)
+              connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+              connection.connect()
+              continue
+            else:
+              print "There was a failure in UYSAGirlsGamesUpdate(), coult not resolve after 5 attempts, aborting..."
+              return
+          break
 
 #
 # To be run BEFORE 'UYSAGirlsGamesUpdate()'
@@ -146,7 +162,9 @@ def UYSAGirlsTeamUpdate():
 	games = tree.xpath('//tbody/tr')
 	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
 	connection.connect()
-	for game in games:
+	while True:
+	  try:
+	    for game in games:
 		children = game.getchildren()
 		if len(children) < 8:
 			continue
@@ -202,11 +220,23 @@ def UYSAGirlsTeamUpdate():
 						           })
 						results = json.loads(connection.getresponse().read())
 						print results
+	  except Exception, e:
+            print str(e)
+            retries += 1
+            if retries < 5:
+              print "Error retry %s..." % retries
+              time.sleep(5)
+              connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+              connection.connect()
+              continue
+            else:
+              print "There was a failure in UYSAGirlsTeamUpdate(), coult not resolve after 5 attempts, aborting..."
+              return
+          break
 
 #
-# Single method to combine all update methods for Utah Soccer facility.
+# Single method to combine all update methods for UYSA girls facility.
 #
-# def utah_soccer_run():
-#   utahSoccerAdultOutdoorTeamsUpdate()
-#   utahSoccerAdultPlayedOutdoorGamesUpdate()
-#   utahSoccerAdultOutdoorGamesUpdate()
+def UYSAGirls_run():
+  UYSAGirlsTeamUpdate()
+  UYSAGirlsGamesUpdate()

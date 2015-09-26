@@ -18,62 +18,80 @@ def UYSABoysTeamUpdate():
 	games = tree.xpath('//tbody/tr')
 	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
 	connection.connect()
-	for game in games:
-		children = game.getchildren()
-		if len(children) < 8:
-			continue
-		else:
-			leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + children[1].getchildren()[0].getchildren()[0].attrib['href']
-			bracketSession = dryscrape.Session(base_url = leagueUrl)
-			bracketSession.visit(leagueUrl)
-			response = bracketSession.body()
-			tree = html.fromstring(response)
-			division = tree.xpath('//*[@id="tabs-1"]/div/table/tbody/tr[2]/td/table/tbody/tr[1]/td/a/div/table[1]/tbody/tr/td[1]')
-			teams = tree.xpath('//tbody/tr')
-			firstElement = 0
-			for team in teams:
-				if firstElement == 0:
-					firstElement = 1;
-					continue
-				else:
-					teamChildren = team.getchildren()
-					if len(teamChildren) != 5:
-						continue
+	retries = 0
+        while True:
+          try:
+	    for game in games:
+		  children = game.getchildren()
+		  if len(children) < 8:
+			  continue
+		  else:
+			  leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + children[1].getchildren()[0].getchildren()[0].attrib['href']
+			  bracketSession = dryscrape.Session(base_url = leagueUrl)
+			  bracketSession.visit(leagueUrl)
+			  response = bracketSession.body()
+			  tree = html.fromstring(response)
+			  division = tree.xpath('//*[@id="tabs-1"]/div/table/tbody/tr[2]/td/table/tbody/tr[1]/td/a/div/table[1]/tbody/tr/td[1]')
+			  teams = tree.xpath('//tbody/tr')
+			  firstElement = 0
+			  for team in teams:
+				  if firstElement == 0:
+					  firstElement = 1;
+					  continue
+				  else:
+					  teamChildren = team.getchildren()
+					  if len(teamChildren) != 5:
+						  continue
 
-					else:
-						teamName = team.getchildren()[1].text
-						teamId = team.getchildren()[3].text
-						params = urllib.urlencode({"where":json.dumps({
-							"teamId": teamId})})
-						connection.request('GET', '/1/classes/UYSABoysTeams?%s' % params,'', {
-							"X-Parse-Application-Id": applicationId,
-							"X-Parse-REST-API-Key": apiKey,
-							})
+					  else:
+						  print team.getchildren()[3].text
+						  teamName = team.getchildren()[1].text
+						  teamId = team.getchildren()[3].text
+						  params = urllib.urlencode({"where":json.dumps({
+							  "teamId": teamId})})
+						  connection.request('GET', '/1/classes/UYSABoysTeams?%s' % params,'', {
+							  "X-Parse-Application-Id": applicationId,
+							  "X-Parse-REST-API-Key": apiKey,
+							  })
 
-						results = json.loads(connection.getresponse().read())
+						  results = json.loads(connection.getresponse().read())
 
-						# Object doesn't exist, POST to create new. 
+						  # Object doesn't exist, POST to create new. 
 
-						if results.values() == [[]]:
-						   call = 'POST'
-						   objId = ''
-						# Object exists, PUT to update existing.
-						else: 
-						   call = 'PUT'
-						   # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
-						   objId = '/%s' % results['results'][0]['objectId']
+						  if results.values() == [[]]:
+						     call = 'POST'
+						     objId = ''
+						  # Object exists, PUT to update existing.
+						  else: 
+						     call = 'PUT'
+						     # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
+						     objId = '/%s' % results['results'][0]['objectId']
 
-						connection.request(call, '/1/classes/UYSABoysTeams%s' % objId, json.dumps({
-						             "teamId": teamId,
-						             "name": teamName,
-						             "division": division[0].text
-						           }), {
-						             "X-Parse-Application-Id": applicationId,
-						             "X-Parse-REST-API-Key": apiKey,
-						             "Content-Type": "application/json"
-						           })
-						results = json.loads(connection.getresponse().read())
-						print results
+						  connection.request(call, '/1/classes/UYSABoysTeams%s' % objId, json.dumps({
+						               "teamId": teamId,
+						               "name": teamName,
+						               "division": division[0].text
+						             }), {
+						               "X-Parse-Application-Id": applicationId,
+						               "X-Parse-REST-API-Key": apiKey,
+						               "Content-Type": "application/json"
+						             })
+						  results = json.loads(connection.getresponse().read())
+						  print results
+	  except Exception, e:
+	    print str(e)
+	    retries += 1
+	    if retries < 5:
+	      print "Error retry %s..." % retries
+	      time.sleep(5)
+	      connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+	      connection.connect()
+	      continue
+	    else:
+	      print "There was a failure in UYSABoysTeamUpdate(), coult not resolve after 5 attempts, aborting..."
+	      return
+	  break
+
 
 #
 # To be run AFTER 'UYSABoysTeamUpdate()'
@@ -103,11 +121,15 @@ def UYSABoysGamesUpdate():
 	games = tree.xpath('//tbody/tr')
 	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
 	connection.connect()
-	for game in games:
-		children = game.getchildren()
-		if len(children) < 8:
-			continue
-		else:
+        retries = 0
+	while True:
+	  try:
+	    for game in games:
+	  	  children = game.getchildren()
+		  if len(children) < 8:
+			  continue
+		  else:
+			print children[2].getchildren()[0].getchildren()[0].attrib['href']
 			leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + children[2].getchildren()[0].getchildren()[0].attrib['href']
 			bracketSession = dryscrape.Session(base_url = leagueUrl)
 			bracketSession.visit(leagueUrl)
@@ -153,8 +175,8 @@ def UYSABoysGamesUpdate():
 					date = centers[centersCount]
 					date = date.getchildren()[0].text[10:]
 					arrayDate = date.split(',')
-					time = bracket.getchildren()[2].getchildren()[0].text
-					date = arrayDate[0][:3] + " " + months.get(arrayDate[1].split(' ')[2]) + "-" + arrayDate[1].split(' ')[3] + "-" + arrayDate[2][3:] + time
+					game_time = bracket.getchildren()[2].getchildren()[0].text
+					date = arrayDate[0][:3] + " " + months.get(arrayDate[1].split(' ')[2]) + "-" + arrayDate[1].split(' ')[3] + "-" + arrayDate[2][3:] + game_time
 					field = bracket.getchildren()[1].text
 					homeTeam = teamDicionary.get(bracket.getchildren()[5].text)
 					homeTeamScore = bracket.getchildren()[6].text
@@ -201,11 +223,23 @@ def UYSABoysGamesUpdate():
 			                    })
 			        results = json.loads(connection.getresponse().read())
 			        print results
+	  except Exception, e:
+            print str(e)
+            retries += 1
+            if retries < 5:
+              print "Error retry %s..." % retries
+              time.sleep(5)
+              connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+              connection.connect()
+              continue
+            else:
+              print "There was a failure in UYSABoysGamesUpdate(), coult not resolve after 5 attempts, aborting..."
+              return
+          break
 
 #
-# Single method to combine all update methods for Utah Soccer facility.
+# Single method to combine all update methods for UYSA facility.
 #
-# def utah_soccer_run():
-#   utahSoccerAdultOutdoorTeamsUpdate()
-#   utahSoccerAdultPlayedOutdoorGamesUpdate()
-#   utahSoccerAdultOutdoorGamesUpdate()
+def UYSABoys_run():
+  UYSABoysTeamUpdate()
+  UYSABoysGamesUpdate()
