@@ -44,7 +44,6 @@ def UYSABoysTeamUpdate():
 						  continue
 
 					  else:
-						  print team.getchildren()[3].text
 						  teamName = team.getchildren()[1].text
 						  teamId = team.getchildren()[3].text
 						  params = urllib.urlencode({"where":json.dumps({
@@ -176,7 +175,7 @@ def UYSABoysGamesUpdate():
 					date = date.getchildren()[0].text[10:]
 					arrayDate = date.split(',')
 					game_time = bracket.getchildren()[2].getchildren()[0].text
-					date = arrayDate[0][:3] + " " + months.get(arrayDate[1].split(' ')[2]) + "-" + arrayDate[1].split(' ')[3] + "-" + arrayDate[2][3:] + game_time
+					date = arrayDate[0][:3] + " " + months.get(arrayDate[1].split(' ')[2]) + "-" + arrayDate[1].split(' ')[3] + "-" + arrayDate[2][3:] + game_time[:-1]
 					field = bracket.getchildren()[1].text
 					homeTeam = teamDicionary.get(bracket.getchildren()[5].text)
 					homeTeamScore = bracket.getchildren()[6].text
