@@ -122,9 +122,11 @@ def gamesUpdate(teamId):
           results = json.loads(connection.getresponse().read())
           # Object doesn't exist, POST to create new.
           if results.values() == [[]]:
-	    print "ADDING TEAM THAT DID NOT EXIST AND ADDING THEIR GAME LIST!"
-	    teamUpdate(homeTeam)
+      	    print "ADDING TEAM THAT DID NOT EXIST AND ADDING THEIR GAME LIST!"
+      	    teamUpdate(homeTeam)
             gamesUpdate(homeTeam)
+          else:
+            homeTeamObjId = results['results'][0]['objectId']
 
           # Add Team information for AwayTeam if it doesn't exist in the table.
           params = urllib.urlencode({"where":json.dumps({
@@ -140,6 +142,8 @@ def gamesUpdate(teamId):
             print "ADDING TEAM THAT DID NOT EXIST AND ADDING THEIR GAME LIST!"
             teamUpdate(awayTeam)
             gamesUpdate(awayTeam)
+          else:
+           awayTeamObjId = results['results'][0]['objectId']
 
           score = "".join(children[4].text.split()).split("-") 
           if score[0]:
@@ -183,6 +187,35 @@ def gamesUpdate(teamId):
                      })
           results = json.loads(connection.getresponse().read())
           print results
+          connection.request('PUT', '/1/classes/Games%s' % objId, json.dumps({
+                        "awayTeamPointer": {
+                         "__op": "AddRelation",
+                         "objects": [
+                           {
+                             "__type": "Pointer",
+                             "className": "Teams",
+                             "objectId": awayTeamObjId
+                           }
+                         ]
+                       },
+                       "homeTeamPointer": {
+                         "__op": "AddRelation",
+                         "objects": [
+                           {
+                             "__type": "Pointer",
+                             "className": "Teams",
+                             "objectId": homeTeamObjId
+                           }
+                         ]
+                       }
+                      }), {
+                       "X-Parse-Application-Id": applicationId,
+                       "X-Parse-REST-API-Key": apiKey,
+                       "Content-Type": "application/json"
+                     })
+          results = json.loads(connection.getresponse().read())
+          print results
+
         else:
           print"\n\n\n\Standings\n"
     except Exception, e:
