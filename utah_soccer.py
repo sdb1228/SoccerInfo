@@ -201,52 +201,112 @@ def utahSoccerAdultOutdoorGamesUpdate():
             awayTeam = children[14].text
             if homeTeam == "-1" or awayTeam == "-1" or homeTeam == "0" or awayTeam == "0":
               break
-
-            realisticDate = children[4].text[-5:] + "-" + children[4].text[2] + children[4].text[3]
-            gameNumber = children[2].text
-	    print 'GameNumber: %s' % gameNumber
-            date = children[3].text[:3] + " " + realisticDate + " " + children[5].text
-            division = children[8].text
-            homeTeam = children[12].text
-            awayTeam = children[14].text
-            field = children[16].text
-
-
-            teams = [homeTeam, awayTeam]
-            utahSoccerTeamDivisionUpdate(teams, division, connection)
-
-            params = urllib.urlencode({"where":json.dumps({
-              "gameNumber": gameNumber})})
-            connection.request('GET', '/1/classes/AdultOutdoorSoccerGames?%s' % params,'', {
-                   "X-Parse-Application-Id": applicationId,
-                   "X-Parse-REST-API-Key": apiKey,
-                 })
-            results = json.loads(connection.getresponse().read())
-
-            # Object doesn't exist, POST to create new.
-            if results.values() == [[]]:
-               call = 'POST'
-               objId = ''
-            # Match exists, PUT to update existing match.
             else:
-               call = 'PUT'
-               objId = '/%s' % results['results'][0]['objectId']
+              realisticDate = children[4].text[-5:] + "-" + children[4].text[2] + children[4].text[3]
+              gameNumber = children[2].text
+              print 'GameNumber: %s' % gameNumber
+              date = children[3].text[:3] + " " + realisticDate + " " + children[5].text
+              division = children[8].text
+              homeTeam = children[12].text
+              awayTeam = children[14].text
+              field = children[16].text
 
-            connection.request(call, '/1/classes/AdultOutdoorSoccerGames%s' % objId, json.dumps({
-                         "date": date,
-                         "gameNumber": gameNumber,
-                         "field": field,
-                         "homeTeam": homeTeam,
-                         "awayTeam": awayTeam,
-                         "division": division
-                       }), {
-                         "X-Parse-Application-Id": applicationId,
-                         "X-Parse-REST-API-Key": apiKey,
-                         "Content-Type": "application/json"
-                       })
-            results = json.loads(connection.getresponse().read())
-            print results
-            break
+
+
+              # Add link back to the team table for easy query later
+              params = urllib.urlencode({"where":json.dumps({
+                    "teamId": homeTeam
+              })})
+              connection.request('GET', '/1/classes/AdultOutdoorSoccerTeams?%s' % params,'', {
+                     "X-Parse-Application-Id": applicationId,
+                     "X-Parse-REST-API-Key": apiKey,
+                   })
+              results = json.loads(connection.getresponse().read())
+              # Object doesn't exist, Continue for now.  Better handeling later
+              if results.values() == [[]]:
+                continue
+              else:
+                homeTeamObjId = results['results'][0]['objectId']
+
+              # Add Team information for AwayTeam if it doesn't exist in the table.
+              params = urllib.urlencode({"where":json.dumps({
+                    "teamId": awayTeam
+              })})
+              connection.request('GET', '/1/classes/AdultOutdoorSoccerTeams?%s' % params,'', {
+                     "X-Parse-Application-Id": applicationId,
+                     "X-Parse-REST-API-Key": apiKey,
+              })
+
+              results = json.loads(connection.getresponse().read())
+              # Object doesn't exist, Continue for now.  Better handeling later
+              if results.values() == [[]]:
+                continue
+              else:
+                awayTeamObjId = results['results'][0]['objectId']
+
+              teams = [homeTeam, awayTeam]
+              utahSoccerTeamDivisionUpdate(teams, division, connection)
+
+              params = urllib.urlencode({"where":json.dumps({
+                "gameNumber": gameNumber})})
+              connection.request('GET', '/1/classes/AdultOutdoorSoccerGames?%s' % params,'', {
+                     "X-Parse-Application-Id": applicationId,
+                     "X-Parse-REST-API-Key": apiKey,
+              })
+
+              results = json.loads(connection.getresponse().read())
+              # Object doesn't exist, POST to create new.
+              if results.values() == [[]]:
+                 call = 'POST'
+                 objId = ''
+              # Match exists, PUT to update existing match.
+              else:
+                 call = 'PUT'
+                 objId = '/%s' % results['results'][0]['objectId']
+
+              connection.request(call, '/1/classes/AdultOutdoorSoccerGames%s' % objId, json.dumps({
+                           "date": date,
+                           "gameNumber": gameNumber,
+                           "field": field,
+                           "homeTeam": homeTeam,
+                           "awayTeam": awayTeam,
+                           "division": division
+                         }), {
+                           "X-Parse-Application-Id": applicationId,
+                           "X-Parse-REST-API-Key": apiKey,
+                           "Content-Type": "application/json"
+                         })
+              results = json.loads(connection.getresponse().read())
+              print results
+              connection.request('PUT', '/1/classes/AdultOutdoorSoccerGames%s' % objId, json.dumps({
+                            "awayTeamPointer": {
+                             "__op": "AddRelation",
+                             "objects": [
+                               {
+                                 "__type": "Pointer",
+                                 "className": "AdultOutdoorSoccerTeams",
+                                 "objectId": awayTeamObjId
+                               }
+                             ]
+                           },
+                           "homeTeamPointer": {
+                             "__op": "AddRelation",
+                             "objects": [
+                               {
+                                 "__type": "Pointer",
+                                 "className": "AdultOutdoorSoccerTeams",
+                                 "objectId": homeTeamObjId
+                               }
+                             ]
+                           }
+                          }), {
+                           "X-Parse-Application-Id": applicationId,
+                           "X-Parse-REST-API-Key": apiKey,
+                           "Content-Type": "application/json"
+                         })
+              results = json.loads(connection.getresponse().read())
+              print results
+              break
           except Exception, e:
             print str(e)
             break
@@ -266,7 +326,7 @@ def utahSoccerAdultOutdoorGamesUpdate():
 
 #
 # Single method to combine all update methods for Utah Soccer facility.
-#
+
 def utah_soccer_run():
   utahSoccerAdultOutdoorTeamsUpdate()
   utahSoccerAdultPlayedOutdoorGamesUpdate()
