@@ -143,7 +143,6 @@ def UYSAGirlsGamesUpdate():
 					else:
 					 homeTeamObjId = results['results'][0]['objectId']
 
-					# Add Team information for AwayTeam if it doesn't exist in the table.
 					params = urllib.urlencode({"where":json.dumps({
 					    "teamId": awayTeam
 					})})

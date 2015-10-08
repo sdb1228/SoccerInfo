@@ -122,7 +122,7 @@ def gamesUpdate(teamId, teamName):
 	for game in games:
 		gameData = game.findChildren()
 		date = gameData[0].findChildren()[0].contents[0]
-		homeTeam = gameData[2].findChildren()[0].contents[0]
+		homeTeam = gameData[2].findChildren()[0]['href'].split('/')[4]
 		score = gameData[5].findChildren()[0].contents[0].split('v')
 		homeTeamScore = ''
 		awayTeamScore = ''
@@ -131,7 +131,7 @@ def gamesUpdate(teamId, teamName):
 			homeTeamScore = scores[0].strip()
 			awayTeamScore = scores[1].strip()
 
-		awayTeam = gameData[7].findChildren()[0].contents[0]
+		awayTeam = gameData[7].findChildren()[0]['href'].split('/')[4]
 		time = gameData[10].findChildren()[0].contents[0]
 		location = gameData[12].findChildren()[0].contents[0]
 
@@ -148,24 +148,20 @@ def gamesUpdate(teamId, teamName):
 			day = "0" + dateSplit2[1]
 
 		date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-15"+ " " + time
-
 		params = urllib.urlencode({"where":json.dumps({
 			"date": date,
 			"field": location,
 			"homeTeam": homeTeam,
 			"awayTeam": awayTeam})
 		})
-
 		connection.request('GET', '/1/classes/SoccerCityGames?%s' % params,'', {
 			"X-Parse-Application-Id": applicationId,
 			"X-Parse-REST-API-Key": apiKey,
 		})
 		results = json.loads(connection.getresponse().read())
-
+		objId = ''
 		if results.values() == [[]]:
 			call = 'POST'
-			objId = ''
-		# Match exists, PUT to update existing match.
 		else:
 			call = 'PUT'
 			objId = '/%s' % results['results'][0]['objectId']
@@ -174,6 +170,7 @@ def gamesUpdate(teamId, teamName):
 			"homeTeamScore": homeTeamScore,
 			"awayTeamScore": awayTeamScore,
 			"homeTeam": homeTeam,
+			"date":     date,
 			"awayTeam": awayTeam,
 			"field": location
 			}), {
@@ -182,8 +179,70 @@ def gamesUpdate(teamId, teamName):
 			"Content-Type": "application/json"
 		})
 		results = json.loads(connection.getresponse().read())
-		print results
+		if objId != '':
+			teamGameLink(objId, homeTeam, awayTeam, connection)
 
+
+def teamGameLink(gameId, homeTeam, awayTeam, connection):
+	params = urllib.urlencode({"where":json.dumps({
+		"teamId": homeTeam
+	})})
+	connection.request('GET', '/1/classes/SoccerCityTeams?%s' % params,'', {
+		"X-Parse-Application-Id": applicationId,
+		"X-Parse-REST-API-Key": apiKey,
+	})
+	results = json.loads(connection.getresponse().read())
+	# Object doesn't exist, Continue for now.  Better handeling later
+	if results.values() == [[]]:
+		return
+	else:
+		homeTeamObjId = results['results'][0]['objectId']
+
+	params = urllib.urlencode({"where":json.dumps({
+		"teamId": awayTeam
+	})})
+	connection.request('GET', '/1/classes/SoccerCityTeams?%s' % params,'', {
+		"X-Parse-Application-Id": applicationId,
+		"X-Parse-REST-API-Key": apiKey,
+	})
+
+	results = json.loads(connection.getresponse().read())
+	# Object doesn't exist, Continue for now.  Better handeling later
+	if results.values() == [[]]:
+		return
+	else:
+		awayTeamObjId = results['results'][0]['objectId']
+
+
+	connection.request('PUT', '/1/classes/SoccerCityGames%s' % gameId, json.dumps({
+        "awayTeamPointer": {
+         "__op": "AddRelation",
+         "objects": [
+           {
+             "__type": "Pointer",
+             "className": "SoccerCityTeams",
+             "objectId": awayTeamObjId
+           }
+         ]
+       },
+       "homeTeamPointer": {
+         "__op": "AddRelation",
+         "objects": [
+           {
+             "__type": "Pointer",
+             "className": "SoccerCityTeams",
+             "objectId": homeTeamObjId
+           }
+         ]
+       }
+      }), {
+       "X-Parse-Application-Id": applicationId,
+       "X-Parse-REST-API-Key": apiKey,
+       "Content-Type": "application/json"
+    })
+
+	results = json.loads(connection.getresponse().read())
+	print results
 
 def fullGameListUpdate():
 	params = urllib.urlencode({"limit":1000})
