@@ -4,6 +4,37 @@ import requests,json,httplib,urllib,sys,dryscrape,time
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
 
+
+#Updates the linker to the games table for UYSA
+def updateLinker(objId, awayTeamObjId, homeTeamObjId, connection):
+	              connection.request('PUT', '/1/classes/UYSABoysGames%s' % objId, json.dumps({
+                            "awayTeamPointer": {
+                             "__op": "AddRelation",
+                             "objects": [
+                               {
+                                 "__type": "Pointer",
+                                 "className": "UYSABoysTeams",
+                                 "objectId": awayTeamObjId
+                               }
+                             ]
+                           },
+                           "homeTeamPointer": {
+                             "__op": "AddRelation",
+                             "objects": [
+                               {
+                                 "__type": "Pointer",
+                                 "className": "UYSABoysTeams",
+                                 "objectId": homeTeamObjId
+                               }
+                             ]
+                           }
+                          }), {
+                           "X-Parse-Application-Id": applicationId,
+                           "X-Parse-REST-API-Key": apiKey,
+                           "Content-Type": "application/json"
+                         })
+	              results = json.loads(connection.getresponse().read())
+	              print results
 #
 # To be run BEFORE 'UYSABoysGamesUpdate()'
 # Scrapes the UYSA site for the teamId, name, and division and puts it into the parse DB
@@ -187,6 +218,38 @@ def UYSABoysGamesUpdate():
 						homeTeamScore = ""
 
 					params = urllib.urlencode({"where":json.dumps({
+					    "teamId": homeTeam
+					})})
+					connection.request('GET', '/1/classes/UYSABoysTeams?%s' % params,'', {
+					     "X-Parse-Application-Id": applicationId,
+					     "X-Parse-REST-API-Key": apiKey,
+					   })
+					results = json.loads(connection.getresponse().read())
+					# Object doesn't exist, Continue for now.  Better handeling later
+					if results.values() == [[]]:
+					 continue
+					else:
+					 homeTeamObjId = results['results'][0]['objectId']
+
+					# Add Team information for AwayTeam if it doesn't exist in the table.
+					params = urllib.urlencode({"where":json.dumps({
+					    "teamId": awayTeam
+					})})
+					connection.request('GET', '/1/classes/UYSABoysTeams?%s' % params,'', {
+					     "X-Parse-Application-Id": applicationId,
+					     "X-Parse-REST-API-Key": apiKey,
+					})
+
+					results = json.loads(connection.getresponse().read())
+					# Object doesn't exist, Continue for now.  Better handeling later
+					if results.values() == [[]]:
+					 continue
+					else:
+					 awayTeamObjId = results['results'][0]['objectId']
+
+
+
+					params = urllib.urlencode({"where":json.dumps({
 			            "date": date,
 			            "field": field,
 			            "homeTeam": homeTeam,
@@ -222,6 +285,7 @@ def UYSABoysGamesUpdate():
 			                    })
 			        results = json.loads(connection.getresponse().read())
 			        print results
+	                	updateLinker(objId, awayTeamObjId, homeTeamObjId,connection)
 	  except Exception, e:
             print str(e)
             retries += 1
