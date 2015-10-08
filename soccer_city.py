@@ -96,92 +96,107 @@ def teamListUpdate():
 # 
 # 
 def gamesUpdate(teamId, teamName):
-	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-	connection.connect()
-	months = {
-        'Jan': '01',
-        'Feb': '02',
-        'Mar': '03',
-        'Apr': '04',
-        'May': '05',
-        'Jun': '06',
-        'Jul': '07',
-        'Aug': '08',
-        'Sep': '09',
-        'Oct': '10',
-        'Nov': '11',
-        'Dec': '12'
-	}
-	url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamName + ".aspx?framed=1"
-	session = dryscrape.Session(base_url = url)
-	session.visit(url)
-	soup = BeautifulSoup(session.body())
-	gamesTable = soup.findAll("table", {"id": "ctl00_C_Schedule1_GridView1"})
-	games = gamesTable[0].findAll("tr")
-	del games[0]
-	for game in games:
-		gameData = game.findChildren()
-		date = gameData[0].findChildren()[0].contents[0]
-		homeTeam = gameData[2].findChildren()[0]['href'].split('/')[4]
-		score = gameData[5].findChildren()[0].contents[0].split('v')
-		homeTeamScore = ''
-		awayTeamScore = ''
-		if len(score) == 1:
-			scores = score[0].split('-')
-			homeTeamScore = scores[0].strip()
-			awayTeamScore = scores[1].strip()
+	retries = 0
+	while True:
+		try:
+			connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+			connection.connect()
+			months = {
+		        'Jan': '01',
+		        'Feb': '02',
+		        'Mar': '03',
+		        'Apr': '04',
+		        'May': '05',
+		        'Jun': '06',
+		        'Jul': '07',
+		        'Aug': '08',
+		        'Sep': '09',
+		        'Oct': '10',
+		        'Nov': '11',
+		        'Dec': '12'
+			}
+			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamName + ".aspx?framed=1"
+			session = dryscrape.Session(base_url = url)
+			session.visit(url)
+			soup = BeautifulSoup(session.body())
+			gamesTable = soup.findAll("table", {"id": "ctl00_C_Schedule1_GridView1"})
+			games = gamesTable[0].findAll("tr")
+			del games[0]
+			for game in games:
+				gameData = game.findChildren()
+				date = gameData[0].findChildren()[0].contents[0]
+				homeTeam = gameData[2].findChildren()[0]['href'].split('/')[4]
+				score = gameData[5].findChildren()[0].contents[0].split('v')
+				homeTeamScore = ''
+				awayTeamScore = ''
+				if len(score) == 1:
+					scores = score[0].split('-')
+					homeTeamScore = scores[0].strip()
+					awayTeamScore = scores[1].strip()
 
-		awayTeam = gameData[7].findChildren()[0]['href'].split('/')[4]
-		time = gameData[10].findChildren()[0].contents[0]
-		location = gameData[12].findChildren()[0].contents[0]
+				awayTeam = gameData[7].findChildren()[0]['href'].split('/')[4]
+				time = gameData[10].findChildren()[0].contents[0]
+				location = gameData[12].findChildren()[0].contents[0]
 
-		if time.strip() == "Complete":
-			session2 = dryscrape.Session(base_url = gameData[10].findChildren()[0]['href'])
-			session2.visit(gameData[10].findChildren()[0]['href'])
-			soup2 = BeautifulSoup(session2.body())
-			time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+				if time.strip() == "Complete":
+					session2 = dryscrape.Session(base_url = gameData[10].findChildren()[0]['href'])
+					session2.visit(gameData[10].findChildren()[0]['href'])
+					soup2 = BeautifulSoup(session2.body())
+					time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 
-		dateSplit = date.split("-")
-		dateSplit2 = dateSplit[1].split(" ")
-		day = dateSplit2[1]
-		if len(dateSplit2[1]) == 1:
-			day = "0" + dateSplit2[1]
+				dateSplit = date.split("-")
+				dateSplit2 = dateSplit[1].split(" ")
+				day = dateSplit2[1]
+				if len(dateSplit2[1]) == 1:
+					day = "0" + dateSplit2[1]
 
-		date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-15"+ " " + time
-		params = urllib.urlencode({"where":json.dumps({
-			"date": date,
-			"field": location,
-			"homeTeam": homeTeam,
-			"awayTeam": awayTeam})
-		})
-		connection.request('GET', '/1/classes/SoccerCityGames?%s' % params,'', {
-			"X-Parse-Application-Id": applicationId,
-			"X-Parse-REST-API-Key": apiKey,
-		})
-		results = json.loads(connection.getresponse().read())
-		objId = ''
-		if results.values() == [[]]:
-			call = 'POST'
-		else:
-			call = 'PUT'
-			objId = '/%s' % results['results'][0]['objectId']
+				date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-15"+ " " + time
+				params = urllib.urlencode({"where":json.dumps({
+					"date": date,
+					"field": location,
+					"homeTeam": homeTeam,
+					"awayTeam": awayTeam})
+				})
+				connection.request('GET', '/1/classes/SoccerCityGames?%s' % params,'', {
+					"X-Parse-Application-Id": applicationId,
+					"X-Parse-REST-API-Key": apiKey,
+				})
+				results = json.loads(connection.getresponse().read())
+				objId = ''
+				if results.values() == [[]]:
+					call = 'POST'
+				else:
+					call = 'PUT'
+					objId = '/%s' % results['results'][0]['objectId']
 
-		connection.request(call, '/1/classes/SoccerCityGames%s' % objId, json.dumps({
-			"homeTeamScore": homeTeamScore,
-			"awayTeamScore": awayTeamScore,
-			"homeTeam": homeTeam,
-			"date":     date,
-			"awayTeam": awayTeam,
-			"field": location
-			}), {
-			"X-Parse-Application-Id": applicationId,
-			"X-Parse-REST-API-Key": apiKey,
-			"Content-Type": "application/json"
-		})
-		results = json.loads(connection.getresponse().read())
-		if objId != '':
-			teamGameLink(objId, homeTeam, awayTeam, connection)
+				connection.request(call, '/1/classes/SoccerCityGames%s' % objId, json.dumps({
+					"homeTeamScore": homeTeamScore,
+					"awayTeamScore": awayTeamScore,
+					"homeTeam": homeTeam,
+					"date":     date,
+					"awayTeam": awayTeam,
+					"field": location
+					}), {
+					"X-Parse-Application-Id": applicationId,
+					"X-Parse-REST-API-Key": apiKey,
+					"Content-Type": "application/json"
+				})
+				results = json.loads(connection.getresponse().read())
+				if objId != '':
+					teamGameLink(objId, homeTeam, awayTeam, connection)
 
+		except Exception, e:
+			print str(e)
+			retries += 1
+			if retries < 5:
+				print "Error retry %s..." % retries
+				connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+				connection.connect()
+				continue
+			else:
+				print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
+				return
+			break
 
 def teamGameLink(gameId, homeTeam, awayTeam, connection):
 	params = urllib.urlencode({"where":json.dumps({
