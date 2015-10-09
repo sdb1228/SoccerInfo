@@ -14,6 +14,7 @@ def teamListUpdate():
 	while len(divisions) == 0:
 	  url= 'http://www.soccercityutah.com/#!schedules/c1c2m'
 	  session = dryscrape.Session(base_url = url)
+	  session.set_timeout(30)
 	  session.visit(url)
 	  soup = BeautifulSoup(session.body())
 	  divisions = soup.findAll("a", {"target": "_blank"})
@@ -32,6 +33,7 @@ def teamListUpdate():
 		print stringDivision
 		print "\n\n"
 		session = dryscrape.Session(base_url = url)
+		session.set_timeout(30)
 		session.visit(url)
 		soup = BeautifulSoup(session.body())
 		teams = soup.findAll("a")
@@ -55,6 +57,7 @@ def teamListUpdate():
 					break
 			else:
 				teamName = team.contents[0]
+				print "teamListUpdate, teamName: " + teamName
 				teamURL = team['href']
 				print teamURL
 				splitUrl = teamURL.split('/')
@@ -97,13 +100,15 @@ def teamListUpdate():
 		    except Exception, e:
 		      print str(e)
 		      retries += 1
-		      if retries < 5:
+		      if retries < 2:
 			print "Error retry %s..." % retries
 			time.sleep(5)
+			connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+        		connection.connect()
 			continue
 		      else:
 			print "There was a failure in teamListUpdate() for SoccerCity, could not resolve after 5 attempts, aborting..."
-			return
+			break
 		    break
 
 # 
@@ -114,6 +119,8 @@ def gamesUpdate(teamId, teamName):
 	retries = 0
 	while True:
 		try:
+			print "gamesUpdate, teamId: " + teamId
+			print "gamesUpdate, name: " + teamName
 			connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
 			connection.connect()
 			months = {
@@ -132,6 +139,7 @@ def gamesUpdate(teamId, teamName):
 			}
 			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamName + ".aspx?framed=1"
 			session = dryscrape.Session(base_url = url)
+			session.set_timeout(30)
 			session.visit(url)
 			soup = BeautifulSoup(session.body())
 			gamesTable = soup.findAll("table", {"id": "ctl00_C_Schedule1_GridView1"})
@@ -150,14 +158,15 @@ def gamesUpdate(teamId, teamName):
 					awayTeamScore = scores[1].strip()
 
 				awayTeam = gameData[7].findChildren()[0]['href'].split('/')[4]
-				time = gameData[10].findChildren()[0].contents[0]
+				game_time = gameData[10].findChildren()[0].contents[0]
 				location = gameData[12].findChildren()[0].contents[0]
 
-				if time.strip() == "Complete":
+				if game_time.strip() == "Complete":
 					session2 = dryscrape.Session(base_url = gameData[10].findChildren()[0]['href'])
+					session2.set_timeout(30)
 					session2.visit(gameData[10].findChildren()[0]['href'])
 					soup2 = BeautifulSoup(session2.body())
-					time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+					game_time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 
 				dateSplit = date.split("-")
 				dateSplit2 = dateSplit[1].split(" ")
@@ -165,7 +174,7 @@ def gamesUpdate(teamId, teamName):
 				if len(dateSplit2[1]) == 1:
 					day = "0" + dateSplit2[1]
 
-				date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-15"+ " " + time
+				date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-15"+ " " + game_time
 				params = urllib.urlencode({"where":json.dumps({
 					"date": date,
 					"field": location,
@@ -210,12 +219,13 @@ def gamesUpdate(teamId, teamName):
 			else:
 				print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
 				return
-			break
+		break
 
 def teamGameLink(gameId, homeTeam, awayTeam, connection):
     retries = 0
     while True:
       try:
+	print "teamGameLink, gameId: " + gameId
 	params = urllib.urlencode({"where":json.dumps({
 		"teamId": homeTeam
 	})})
@@ -300,7 +310,21 @@ def fullGameListUpdate():
 	results = json.loads(connection.getresponse().read())
 	teams = results['results']
 	for team in teams:
+	  retries = 0
+	  while True:
+	    try:
 		gamesUpdate(team['teamId'], team['name'])
+	    except Exception, e:
+              print str(e)
+              retries += 1
+              if retries < 5:
+                print "Error retry %s..." % retries
+                time.sleep(5)
+                continue
+              else:
+                print "There was a failure in fullGameListUpdate() in SoccerCity, could not resolve after 5 attempts, aborting..."
+                break
+            break
 
 
 
