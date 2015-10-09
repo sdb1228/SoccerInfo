@@ -5,16 +5,18 @@ applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
 #
 # To be run before 'fullGameListUpdate()' to seed iterable data.
-# Scrapes the Let's Play site to obtain a list of all teams in (currently) facility 12 and stores the team data in the 'Teams' table of the Parse DB.
+# Scrapes the Soccer City site to obtain a list of all teams in (currently) facility 12 and stores the team data in the 'Teams' table of the Parse DB.
 #
 def teamListUpdate():
 	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
 	connection.connect()
-	url= 'http://www.soccercityutah.com/#!schedules/c1c2m'
-	session = dryscrape.Session(base_url = url)
-	session.visit(url)
-	soup = BeautifulSoup(session.body())
-	divisions = soup.findAll("a", {"target": "_blank"})
+	divisions = []
+	while len(divisions) == 0:
+	  url= 'http://www.soccercityutah.com/#!schedules/c1c2m'
+	  session = dryscrape.Session(base_url = url)
+	  session.visit(url)
+	  soup = BeautifulSoup(session.body())
+	  divisions = soup.findAll("a", {"target": "_blank"})
 	del divisions[-1]
 	del divisions[-1]
 	del divisions[9]
@@ -45,6 +47,9 @@ def teamListUpdate():
 				del teams[0]
 
 		for team in teams:
+		  retries = 0
+		  while True:
+		    try:
 			if team.has_attr('name'):
 				if team['name'] == "schedule":
 					break
@@ -89,7 +94,17 @@ def teamListUpdate():
 				results = json.loads(connection.getresponse().read())
 
 				print results
-
+		    except Exception, e:
+		      print str(e)
+		      retries += 1
+		      if retries < 5:
+			print "Error retry %s..." % retries
+			time.sleep(5)
+			continue
+		      else:
+			print "There was a failure in teamListUpdate() for SoccerCity, could not resolve after 5 attempts, aborting..."
+			return
+		    break
 
 # 
 # Updates the teams games from the soccer city website given their teamId and their teamName and puts them into parse table called SoccerCityGames
@@ -189,9 +204,8 @@ def gamesUpdate(teamId, teamName):
 			print str(e)
 			retries += 1
 			if retries < 5:
+				time.sleep(5)
 				print "Error retry %s..." % retries
-				connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-				connection.connect()
 				continue
 			else:
 				print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
@@ -199,6 +213,9 @@ def gamesUpdate(teamId, teamName):
 			break
 
 def teamGameLink(gameId, homeTeam, awayTeam, connection):
+    retries = 0
+    while True:
+      try:
 	params = urllib.urlencode({"where":json.dumps({
 		"teamId": homeTeam
 	})})
@@ -258,6 +275,19 @@ def teamGameLink(gameId, homeTeam, awayTeam, connection):
 
 	results = json.loads(connection.getresponse().read())
 	print results
+      except Exception, e:
+        print str(e)
+        retries += 1
+        if retries < 5:
+          print "Error retry %s..." % retries
+          time.sleep(5)
+          connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+          connection.connect()
+          continue
+        else:
+          print "There was a failure in teamGameLink() in SoccerCity, could not resolve after 5 attempts, aborting..."
+          return
+      break
 
 def fullGameListUpdate():
 	params = urllib.urlencode({"limit":1000})
@@ -274,3 +304,6 @@ def fullGameListUpdate():
 
 
 
+
+teamListUpdate()
+fullGameListUpdate()
