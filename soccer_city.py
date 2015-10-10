@@ -12,12 +12,12 @@ def teamListUpdate():
 	connection.connect()
 	divisions = []
 	while len(divisions) == 0:
-	  url= 'http://www.soccercityutah.com/#!schedules/c1c2m'
-	  session = dryscrape.Session(base_url = url)
-	  session.set_timeout(30)
-	  session.visit(url)
-	  soup = BeautifulSoup(session.body())
-	  divisions = soup.findAll("a", {"target": "_blank"})
+		url= 'http://www.soccercityutah.com/#!schedules/c1c2m'
+		session = dryscrape.Session(base_url = url)
+		session.set_timeout(30)
+		session.visit(url)
+		soup = BeautifulSoup(session.body())
+		divisions = soup.findAll("a", {"target": "_blank"})
 	del divisions[-1]
 	del divisions[-1]
 	del divisions[9]
@@ -40,28 +40,26 @@ def teamListUpdate():
 		if soup.find("a", {"href": "#stats"}) is not None:
 			del teams[0]
 
+
 		for x in xrange(1,18):
 			del teams[0]
 
+		betterstrat = ""
 		stringDivision = stringDivision.replace(u'\xa0', ' ')
-		if stringDivision.split(' ')[1] == "30":
-			for x in xrange(1,17):
-				del teams[0]
+		betterstrat = soup.findAll("table",{"id": "ctl00_C_Standings_GridView1"})
 
-		for team in teams:
+		teams2 = betterstrat[0].findAll("tr")
+		del teams2[0]
+
+		for thing in teams2:
 		  retries = 0
 		  while True:
 		    try:
-			if team.has_attr('name'):
-				if team['name'] == "schedule":
-					break
-			else:
-				teamName = team.contents[0]
-				print "teamListUpdate, teamName: " + teamName
-				teamURL = team['href']
-				print teamURL
+
+				teamName = thing.findChildren()[0].findChildren()[0].contents[0]
+				teamURL = thing.findChildren()[0].findChildren()[0]['href']
 				splitUrl = teamURL.split('/')
-				teamId = ""
+
 				if stringDivision.split(' ')[1] == "30":
 					teamId = splitUrl[1]
 				else:
@@ -138,8 +136,9 @@ def gamesUpdate(teamId, teamName):
 		        'Dec': '12'
 			}
 			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamName + ".aspx?framed=1"
+			print url
 			session = dryscrape.Session(base_url = url)
-			session.set_timeout(30)
+			session.set_timeout(60)
 			session.visit(url)
 			soup = BeautifulSoup(session.body())
 			gamesTable = soup.findAll("table", {"id": "ctl00_C_Schedule1_GridView1"})
@@ -329,5 +328,5 @@ def fullGameListUpdate():
 
 
 
-teamListUpdate()
+# teamListUpdate()
 fullGameListUpdate()
