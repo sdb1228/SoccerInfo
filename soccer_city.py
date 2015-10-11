@@ -135,11 +135,13 @@ def gamesUpdate(teamId, teamName):
 		        'Nov': '11',
 		        'Dec': '12'
 			}
-			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamName + ".aspx?framed=1"
+			teamNameWithoutSpace = teamName.replace(u' ', '%20') 
+			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamNameWithoutSpace + ".aspx?framed=1"
 			print url
 			session = dryscrape.Session(base_url = url)
 			session.set_timeout(60)
 			session.visit(url)
+
 			soup = BeautifulSoup(session.body())
 			gamesTable = soup.findAll("table", {"id": "ctl00_C_Schedule1_GridView1"})
 			games = gamesTable[0].findAll("tr")
@@ -162,7 +164,7 @@ def gamesUpdate(teamId, teamName):
 
 				if game_time.strip() == "Complete":
 					session2 = dryscrape.Session(base_url = gameData[10].findChildren()[0]['href'])
-					session2.set_timeout(30)
+					session2.set_timeout(60)
 					session2.visit(gameData[10].findChildren()[0]['href'])
 					soup2 = BeautifulSoup(session2.body())
 					game_time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
@@ -308,17 +310,26 @@ def fullGameListUpdate():
 	})
 	results = json.loads(connection.getresponse().read())
 	teams = results['results']
+	count = 0
 	for team in teams:
 	  retries = 0
 	  while True:
 	    try:
+	    	if count is 5:
+	    		print "Sleeping 2min to avoid firewall prevention"
+	    		time.sleep(120)
+	    		count = 0
+
+	    	print count
 		gamesUpdate(team['teamId'], team['name'])
+	    	count += 1
+
 	    except Exception, e:
               print str(e)
               retries += 1
               if retries < 5:
                 print "Error retry %s..." % retries
-                time.sleep(5)
+                time.sleep(120)
                 continue
               else:
                 print "There was a failure in fullGameListUpdate() in SoccerCity, could not resolve after 5 attempts, aborting..."
