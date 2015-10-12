@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import requests,json,httplib,sys,dryscrape,urllib,time, datetime
+import requests,json,httplib,sys,dryscrape,urllib,time, datetime, threading
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
@@ -22,6 +22,9 @@ def teamListUpdate():
 	del divisions[-1]
 	del divisions[9]
 	for division in divisions:
+	  retries = 0
+          while True:
+            try:
 		url= division['href']
 		print "URL " + url
 		stringDivision = ""
@@ -52,10 +55,6 @@ def teamListUpdate():
 		del teams2[0]
 
 		for thing in teams2:
-		  retries = 0
-		  while True:
-		    try:
-
 				teamName = thing.findChildren()[0].findChildren()[0].contents[0]
 				teamURL = thing.findChildren()[0].findChildren()[0]['href']
 				splitUrl = teamURL.split('/')
@@ -95,29 +94,30 @@ def teamListUpdate():
 				results = json.loads(connection.getresponse().read())
 
 				print results
-		    except Exception, e:
-		      print str(e)
-		      retries += 1
-		      if retries < 2:
-			print "Error retry %s..." % retries
-			time.sleep(5)
-			connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-        		connection.connect()
-			continue
-		      else:
-			print "There was a failure in teamListUpdate() for SoccerCity, could not resolve after 5 attempts, aborting..."
-			break
-		    break
+	    except Exception, e:
+              print str(e)
+              retries += 1
+              if retries < 5:
+                print "Error retry %s..." % retries
+                time.sleep(5)
+                connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+                connection.connect()
+                continue
+              else:
+                print "There was a failure in teamListUpdate() for SoccerCity, could not resolve after 5 attempts, aborting..."
+                break
+            break
 
 # 
 # Updates the teams games from the soccer city website given their teamId and their teamName and puts them into parse table called SoccerCityGames
 # 
 # 
-def gamesUpdate(teamId, teamName):
-	retries = 0
+def gamesUpdate(teamId, teamName, session):
+	session = session
+	retries = 1
 	while True:
 		try:
-			print "gamesUpdate, teamId: " + teamId
+			print "\ngamesUpdate, teamId: " + teamId
 			print "gamesUpdate, name: " + teamName
 			connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
 			connection.connect()
@@ -138,10 +138,11 @@ def gamesUpdate(teamId, teamName):
 			teamNameWithoutSpace = teamName.replace(u' ', '%20') 
 			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamNameWithoutSpace + ".aspx?framed=1"
 			print url
-			session = dryscrape.Session(base_url = url)
-			session.set_timeout(60)
+		#	session = dryscrape.Session()
+		#	session.set_attribute('auto_load_images', False)
+		#	session.set_timeout(retries*20)
 			session.visit(url)
-
+			print "after url"
 			soup = BeautifulSoup(session.body())
 			gamesTable = soup.findAll("table", {"id": "ctl00_C_Schedule1_GridView1"})
 			games = gamesTable[0].findAll("tr")
@@ -163,11 +164,14 @@ def gamesUpdate(teamId, teamName):
 				location = gameData[12].findChildren()[0].contents[0]
 
 				if game_time.strip() == "Complete":
-					session2 = dryscrape.Session(base_url = gameData[10].findChildren()[0]['href'])
-					session2.set_timeout(60)
-					session2.visit(gameData[10].findChildren()[0]['href'])
-					soup2 = BeautifulSoup(session2.body())
-					game_time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+				#	session2 = dryscrape.Session(base_url = gameData[10].findChildren()[0]['href'])
+				#	session.set_attribute('auto_load_images', False)
+				#	session2.set_timeout(retries*20)
+				#	print "second url = " + gameData[10].findChildren()[0]['href']
+				#	session.visit(gameData[10].findChildren()[0]['href'])
+				#	soup2 = BeautifulSoup(session.body())
+				#	game_time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+					game_time = testMethod(gameData[10].findChildren()[0]['href'])
 
 				dateSplit = date.split("-")
 				dateSplit2 = dateSplit[1].split(" ")
@@ -213,8 +217,8 @@ def gamesUpdate(teamId, teamName):
 		except Exception, e:
 			print str(e)
 			retries += 1
-			if retries < 5:
-				time.sleep(5)
+			if retries < 6:
+				time.sleep(retries*retries*retries)
 				print "Error retry %s..." % retries
 				continue
 			else:
@@ -310,34 +314,49 @@ def fullGameListUpdate():
 	})
 	results = json.loads(connection.getresponse().read())
 	teams = results['results']
-	count = 0
+	session = dryscrape.Session()
+        session.set_attribute('auto_load_images', False)
+        session.set_timeout(20)
 	for team in teams:
 	  retries = 0
 	  while True:
 	    try:
-	    	if count is 5:
-	    		print "Sleeping 2min to avoid firewall prevention"
-	    		time.sleep(120)
-	    		count = 0
-
-	    	print count
-		gamesUpdate(team['teamId'], team['name'])
-	    	count += 1
+		  gamesUpdate(team['teamId'], team['name'], session)
 
 	    except Exception, e:
               print str(e)
               retries += 1
               if retries < 5:
                 print "Error retry %s..." % retries
-                time.sleep(120)
+                time.sleep(5)
                 continue
               else:
                 print "There was a failure in fullGameListUpdate() in SoccerCity, could not resolve after 5 attempts, aborting..."
                 break
             break
 
+def testMethod(url):
+	retries = 0
+	while True:
+		try:
+					session = dryscrape.Session()
+        				session.set_attribute('auto_load_images', False)
+        				session.set_timeout(20)
+					print "second url = " + url
+                                        session.visit(url)
+                                        soup2 = BeautifulSoup(session.body())
+                                        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+		except Exception, e:
+			retries += 1
+			if retries < 5:
+				print "error retry %s..." % retries
+				time.sleep(5)
+				continue
+			else:
+				print "aborting...."
+				break
+			break
 
 
-
-# teamListUpdate()
+teamListUpdate()
 fullGameListUpdate()
