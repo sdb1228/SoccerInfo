@@ -138,9 +138,6 @@ def gamesUpdate(teamId, teamName, session):
 			teamNameWithoutSpace = teamName.replace(u' ', '%20') 
 			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamNameWithoutSpace + ".aspx?framed=1"
 			print url
-		#	session = dryscrape.Session()
-		#	session.set_attribute('auto_load_images', False)
-		#	session.set_timeout(retries*20)
 			session.visit(url)
 			print "after url"
 			soup = BeautifulSoup(session.body())
@@ -164,14 +161,7 @@ def gamesUpdate(teamId, teamName, session):
 				location = gameData[12].findChildren()[0].contents[0]
 
 				if game_time.strip() == "Complete":
-				#	session2 = dryscrape.Session(base_url = gameData[10].findChildren()[0]['href'])
-				#	session.set_attribute('auto_load_images', False)
-				#	session2.set_timeout(retries*20)
-				#	print "second url = " + gameData[10].findChildren()[0]['href']
-				#	session.visit(gameData[10].findChildren()[0]['href'])
-				#	soup2 = BeautifulSoup(session.body())
-				#	game_time = soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
-					game_time = testMethod(gameData[10].findChildren()[0]['href'])
+					game_time = getGameTime(gameData[10].findChildren()[0]['href'])
 
 				dateSplit = date.split("-")
 				dateSplit2 = dateSplit[1].split(" ")
@@ -335,17 +325,17 @@ def fullGameListUpdate():
                 break
             break
 
-def testMethod(url):
+def getGameTime(url):
 	retries = 0
 	while True:
 		try:
-					session = dryscrape.Session()
-        				session.set_attribute('auto_load_images', False)
-        				session.set_timeout(20)
-					print "second url = " + url
-                                        session.visit(url)
-                                        soup2 = BeautifulSoup(session.body())
-                                        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+			session = dryscrape.Session()
+        		session.set_attribute('auto_load_images', False)
+        		session.set_timeout(20)
+			print "second url = " + url
+                        session.visit(url)
+                        soup2 = BeautifulSoup(session.body())
+                        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 		except Exception, e:
 			retries += 1
 			if retries < 5:
