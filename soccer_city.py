@@ -161,7 +161,7 @@ def gamesUpdate(teamId, teamName, session):
 				location = gameData[12].findChildren()[0].contents[0]
 
 				if game_time.strip() == "Complete":
-					game_time = getGameTime(gameData[10].findChildren()[0]['href'])
+					game_time = getGameTime(gameData[10].findChildren()[0]['href'], session)
 
 				dateSplit = date.split("-")
 				dateSplit2 = dateSplit[1].split(" ")
@@ -325,13 +325,13 @@ def fullGameListUpdate():
                 break
             break
 
-def getGameTime(url):
+def getGameTime(url, session):
 	retries = 0
 	while True:
 		try:
-			session = dryscrape.Session()
-        		session.set_attribute('auto_load_images', False)
-        		session.set_timeout(20)
+			#session = dryscrape.Session()
+        		#session.set_attribute('auto_load_images', False)
+        		#session.set_timeout(20)
 			print "second url = " + url
                         session.visit(url)
                         soup2 = BeautifulSoup(session.body())
