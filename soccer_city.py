@@ -454,6 +454,6 @@ def getGameTime(url, session):
 				break
 			break
 
-
-# teamListUpdate()
-# fullGameListUpdate()
+youthTeamListUpdate()
+teamListUpdate()
+fullGameListUpdate()
