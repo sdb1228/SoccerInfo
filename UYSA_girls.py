@@ -1,47 +1,15 @@
 from lxml import html
-import requests,json,httplib,urllib,sys,dryscrape,time
-
-applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
-apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
-
-
-
-#Updates the linker to the games table for UYSA
-def updateLinker(objId, awayTeamObjId, homeTeamObjId, connection):
-	              connection.request('PUT', '/1/classes/UYSAGirlsGames%s' % objId, json.dumps({
-                            "awayTeamPointer": {
-                             "__op": "AddRelation",
-                             "objects": [
-                               {
-                                 "__type": "Pointer",
-                                 "className": "UYSAGirlsTeams",
-                                 "objectId": awayTeamObjId
-                               }
-                             ]
-                           },
-                           "homeTeamPointer": {
-                             "__op": "AddRelation",
-                             "objects": [
-                               {
-                                 "__type": "Pointer",
-                                 "className": "UYSAGirlsTeams",
-                                 "objectId": homeTeamObjId
-                               }
-                             ]
-                           }
-                          }), {
-                           "X-Parse-Application-Id": applicationId,
-                           "X-Parse-REST-API-Key": apiKey,
-                           "Content-Type": "application/json"
-                         })
-	              results = json.loads(connection.getresponse().read())
-	              print results
+from bs4 import BeautifulSoup
+from openpyxl import load_workbook
+import requests,json,httplib,urllib,sys,dryscrape,time,psycopg2, datetime, os
 
 #
 # To be run AFTER 'UYSAGirlsTeamUpdate()'
 # Scrapes the UYSA site For all the games related to the teams in the division.
 #
 def UYSAGirlsGamesUpdate():
+	connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+	cursor = connection.cursor()
 	months = {
             'January': '01',
             'February': '02',
@@ -59,155 +27,248 @@ def UYSAGirlsGamesUpdate():
 	url = 'http://uysa.affinitysoccer.com/tour/public/info/accepted_list.asp?sessionguid=&tournamentguid=DF7BDAE9-AED4-4836-9B48-1BBE491CA60A&show=girls'
 	session = dryscrape.Session(base_url = url)
 	session.visit(url)
-	response = session.body()
-	tree = html.fromstring(response)
-	games = tree.xpath('//tbody/tr')
-	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-	connection.connect()
+	soup = BeautifulSoup(session.body())
+	schedules = soup.findAll("a", href=True, text="Schedule & Results")
 	retries = 0
+	consoleHelp = 0
+
 	while True:
 	  try:
-	    for game in games:
-		children = game.getchildren()
-		if len(children) < 8:
-			continue
-		else:
-			leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + children[2].getchildren()[0].getchildren()[0].attrib['href']
+	    for schedule in schedules:
+			leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + schedule['href']
+			consoleHelp += 1
+			print leagueUrl + " " + str(consoleHelp) + "\n\n\n\n\n\n\n"
 			bracketSession = dryscrape.Session(base_url = leagueUrl)
+	        	bracketSession.set_attribute('auto_load_images', False)
+	    		bracketSession.set_timeout(40)
 			bracketSession.visit(leagueUrl)
-			response = bracketSession.body()
-			tree = html.fromstring(response)
-			teams = tree.xpath('//*[@id="tabs-1"]/div/table[4]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr')
-			firstElement = 0
+			soup2 = BeautifulSoup(bracketSession.body())
+			centers = soup2.findAll("center", {"xmlns:msxsl": "urn:schemas-microsoft-com:xslt"})
+			tables = soup2.findAll("table", {"xmlns:msxsl":"urn:schemas-microsoft-com:xslt"})
 			teamDicionary = {}
-			for team in teams:
-				if firstElement < 2:
-					firstElement+=1
-					continue
+			tbodys = tables[0].findAll("table", {"cellspacing" : "2"})
+			trs = tbodys[0].findAll("tr")
+			centersCount = 0
+			del trs[0]
+			del trs[0]
+			for tr in trs:
+				teamId = tr.findChildren()[5]['href'].split("teamcode")[-1]
+				teamId = teamId.replace("=", "")
+				teamId = teamId[:16]
+				name = tr.findChildren()[5].contents[1]
+				name = name[3:]
+				group = tr.findChildren()[6].contents[0]
+				teamDicionary[group] = teamId
 
+			del tables[0]
 
-				teamDicionary[team.getchildren()[1].getchildren()[0].getchildren()[0].attrib['href'].split('&')[4][9:]] =  team.getchildren()[1].getchildren()[0].getchildren()[0].attrib['href'].split('&')[5][9:]
+			tableCount = 0
+			for table in tables:
+				tableCount += 1
+				print "Table " + str(tableCount) + " Being Parsed"
+				trs = table.findAll("tr")
+				# delete header of table
+				del trs[0]
+				for tr in trs:
 
-			tbodys = tree.xpath('//tbody')
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			del tbodys[0]
-			centers = tree.xpath('//center')
-			centersCount = -1
-			for table in tbodys:
-				if len(table.getchildren()) < 2:
-					continue
-
-				centersCount +=1
-				noneElementRemoval = 0
-				for bracket in table.getchildren():
-					if noneElementRemoval < 1:
-						noneElementRemoval = 1
+					field = tr.findChildren()[1].contents[0]
+					field = field.lstrip()
+					field = field.rstrip()
+					if tr.findChildren()[2].contents[0] == "Closed!":
 						continue
 
 					date = centers[centersCount]
-					date = date.getchildren()[0].text[10:]
+					date = date.findChildren()[0].contents[0][10:]
 					arrayDate = date.split(',')
-					game_time = bracket.getchildren()[2].getchildren()[0].text
+					game_time = tr.findChildren()[2].findChildren()[0].contents[0]
+
 					date = arrayDate[0][:3] + " " + months.get(arrayDate[1].split(' ')[2]) + "-" + arrayDate[1].split(' ')[3] + "-" + arrayDate[2][3:] + game_time[:-1]
-					field = bracket.getchildren()[1].text
-					homeTeam = teamDicionary.get(bracket.getchildren()[5].text)
-					homeTeamScore = bracket.getchildren()[6].text
-					awayTeam = teamDicionary.get(bracket.getchildren()[8].text)
-					awayTeamScore = bracket.getchildren()[9].text
-					if awayTeamScore is None or awayTeamScore.isspace():
-						awayTeamScore = ""
-					if awayTeamScore is None or homeTeamScore.isspace():
-						homeTeamScore = ""
 
-					params = urllib.urlencode({"where":json.dumps({
-					    "teamId": homeTeam
-					})})
-					connection.request('GET', '/1/classes/UYSAGirlsTeams?%s' % params,'', {
-					     "X-Parse-Application-Id": applicationId,
-					     "X-Parse-REST-API-Key": apiKey,
-					   })
-					results = json.loads(connection.getresponse().read())
-					# Object doesn't exist, Continue for now.  Better handeling later
-					if results.values() == [[]]:
-					 continue
+					# We should do some smarter parsing here that if the game is TBD Maybe still store the date and on the phone do more magic
+					# Until then this will have to do
+					if field == "TBD":
+						continue
+
+					neededDate = date[4:]
+					month = int(neededDate[:2])
+					day = neededDate[3] + neededDate[4]
+					day = int(day)
+					year = "20" + neededDate[6] + neededDate[7]
+					year = int(year)
+					gameTime = datetime.datetime.strptime(neededDate[9:], '%I:%M %p')
+					saveDate = datetime.datetime(year, month, day, gameTime.hour, gameTime.minute)
+
+
+					awayVHome = tr.findChildren()[5].findChildren()[0].contents[0].split(" ")
+					homeTeam = teamDicionary.get(awayVHome[0])
+					awayTeam = teamDicionary.get(awayVHome[2])
+
+					if not homeTeam or not awayTeam:
+						print awayVHome[0]
+						print awayVHome[2]
+						print "ERROR NO TEAMS"
+						return
+
+					homeTeamScore = None
+					awayTeamScore = None
+					
+					extraCell = False
+					specialCell = False
+					
+					if len(tr.findChildren()[8].findChildren()) == 1:
+						extraCell = True
+						if len(tr.findChildren()[8].findChildren()[0].contents) == 0:
+							specialCell = True
+							extraCell = False
+							homeTeamScore = "0"
+							awayTeamScore = "1"
+						else:
+							homeTeamScore = tr.findChildren()[8].findChildren()[0].contents[0]
 					else:
-					 homeTeamObjId = results['results'][0]['objectId']
+						if len(tr.findChildren()[8].contents) == 0:
+							specialCell = True
+							extraCell = False
+							homeTeamScore = "0"
+							awayTeamScore = "1"
+						else:
+							homeTeamScore = tr.findChildren()[8].contents[0]
 
-					params = urllib.urlencode({"where":json.dumps({
-					    "teamId": awayTeam
-					})})
-					connection.request('GET', '/1/classes/UYSAGirlsTeams?%s' % params,'', {
-					     "X-Parse-Application-Id": applicationId,
-					     "X-Parse-REST-API-Key": apiKey,
-					})
 
-					results = json.loads(connection.getresponse().read())
-					# Object doesn't exist, Continue for now.  Better handeling later
-					if results.values() == [[]]:
-					 continue
+					if specialCell:
+						homeTeamScore = "0"
+						awayTeamScore = "1"
+						
+					elif extraCell:
+						homeTeamScoreDisq = homeTeamScore.strip() == "D" or homeTeamScore.strip() == "F"
+						if homeTeamScoreDisq:
+							homeTeamScore = "1"
+							awayTeamScore = "0"
+
+						elif len(tr.findChildren()[12].findChildren()) == 1:
+							awayTeamScore = tr.findChildren()[12].findChildren()[0].contents[0]
+						else:
+							awayTeamScore = tr.findChildren()[12].contents[0]
 					else:
-					 awayTeamObjId = results['results'][0]['objectId']
+						if len(tr.findChildren()[11].findChildren()) == 1:
+							awayTeamScore = tr.findChildren()[11].findChildren()[0].contents[0]
+						else:
+							awayTeamScore = tr.findChildren()[11].contents[0]
+					
+					homeTeamScore = homeTeamScore.strip()
+					awayTeamScore = awayTeamScore.strip()
+					awayTeamScoreDisq = awayTeamScore == "D" or awayTeamScore == "F"
+					if awayTeamScoreDisq:
+						homeTeamScore = 1
+						awayTeamScore = 0
 
-					params = urllib.urlencode({"where":json.dumps({
-			            "date": date,
-			            "field": field,
-			            "homeTeam": homeTeam,
-			            "awayTeam": awayTeam})})
+					if homeTeamScore == "CS" or awayTeamScore == "CS":
+						homeTeamScore = None
+						awayTeamScore = None
+					if not homeTeamScore:
+						homeTeamScore = None
+					else:
+						homeTeamScore = int(homeTeamScore)	
+					if not awayTeamScore:
+						awayTeamScore = None
+					else:
+						awayTeamScore = int(awayTeamScore)
 
-			        connection.request('GET', '/1/classes/UYSAGirlsGames?%s' % params,'', {
-			                 "X-Parse-Application-Id": applicationId,
-			                 "X-Parse-REST-API-Key": apiKey,
-			            })
 
-			        results = json.loads(connection.getresponse().read())
+					selectQuery = """SELECT id FROM "fields" WHERE name LIKE '{0}%'; """.format(field)
+					cursor.execute(selectQuery)
+					DBfield = cursor.fetchone()
+					if DBfield is None:
+						print "Field doesn't match DB"
+						print field
+						insertQuery = """INSERT INTO "fields" ("name") VALUES ('{0}');""".format(field)
+						cursor.execute(insertQuery)
+						print "Inserted missing field"
+						field = field.rstrip()
+						field = field.lstrip()
+						print field
+						selectQuery = """SELECT id FROM "fields" WHERE name LIKE '{0}%'; """.format(str(field))
+						cursor.execute(selectQuery)
+						DBfield = cursor.fetchone()
+					
+					DBfield = DBfield[0]
 
-			        # Object doesn't exist, POST to create new.
-			        if results.values() == [[]]:
-			            call = 'POST'
-			            objId = ''
-			        # Match exists, PUT to update existing match.
-			        else:
-			            call = 'PUT'
-			            objId = '/%s' % results['results'][0]['objectId']
+					gamesSelectQuery = """SELECT * FROM "games" WHERE awayTeam=%s AND homeTeam=%s AND gamesdatetime=%s AND field = %s"""
+					gamesSelectData = (awayTeam, homeTeam, saveDate, DBfield)
+					cursor.execute(gamesSelectQuery, gamesSelectData)
+					game = cursor.fetchone()
 
-			        connection.request(call, '/1/classes/UYSAGirlsGames%s' % objId, json.dumps({
-			                    "date": date,
-			                    "field": field,
-			                    "homeTeam": homeTeam,
-			                    "awayTeam": awayTeam,
-			                    "homeTeamScore": homeTeamScore,
-			                    "awayTeamScore": awayTeamScore
-			                    }), {
-			                    	"X-Parse-Application-Id": applicationId,
-			                       	"X-Parse-REST-API-Key": apiKey,
-			                       	"Content-Type": "application/json"
-			                    })
-			        results = json.loads(connection.getresponse().read())
-			        print results
-			        updateLinker(objId, awayTeamObjId, homeTeamObjId,connection)
+					if game is not None:
+						print "Updating"
+						updateQuery = """UPDATE "games" SET  "awayteam"=%s, "hometeam"=%s,"gamesdatetime"=%s, "field"=%s,"hometeamscore"=%s, "awayteamscore"=%s WHERE "id" = %s ; """
+						updateData = (awayTeam, homeTeam, saveDate, DBfield, homeTeamScore, awayTeamScore, game[6])
+						cursor.execute(updateQuery, updateData)
+					else:
+						print "Inserting"
+						insertQuery = """INSERT INTO "games" ("awayteam", "hometeam", "gamesdatetime", "field", "hometeamscore", "awayteamscore") VALUES (%s, %s, %s, %s, %s, %s);"""
+						insertData = (awayTeam, homeTeam, saveDate, DBfield, homeTeamScore, awayTeamScore)
+						cursor.execute(insertQuery, insertData)
+
+					connection.commit()
+
+				centersCount += 1
 	  except Exception, e:
             print str(e)
             retries += 1
             if retries < 5:
-              print "Error retry %s..." % retries
-              time.sleep(5)
-              connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-              connection.connect()
-              continue
+              return
             else:
               print "There was a failure in UYSAGirlsGamesUpdate(), coult not resolve after 5 attempts, aborting..."
               return
           break
+
+def fields():
+	connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+	cursor = connection.cursor()
+	for num in range(1,23):
+		wb = load_workbook(filename = '(678610944) fieldLocations.xlsx')
+		page = 'page '
+		page+=str(num)
+		ws1 = wb[page]
+		for num in range(1,31):
+			columnB = 'B'
+			columnC = 'C'
+			columnD = 'D'
+			columnB+=str(num)
+			columnC+=str(num)
+			columnD+=str(num)
+			if not ws1[columnB].value or ws1[columnB].value =="TBD" or ws1[columnB].value =="Taggert Pit":
+				continue
+
+
+			name = ws1[columnB].value.rstrip()
+			name = name.lstrip()
+			address = ws1[columnC].value.rstrip()
+			address = address.lstrip()
+			city = ws1[columnD].value.rstrip()
+			city = city.lstrip()
+
+			if name =="Name":
+				continue
+
+			print name + " " + address + " " + city
+
+			selectQuery = """SELECT * FROM "fields" WHERE name='{0}'; """.format(name)
+			cursor.execute(selectQuery)
+			field = cursor.fetchone()
+
+			if field is not None:
+				print "Updating " + name
+				updateQuery = """UPDATE "fields" SET  "name" = %s, "address" = %s, "city" = %s, "state" = %s WHERE "id" = %s ; """
+				updateData = (name, address, city, "UT", field[5])
+				cursor.execute(updateQuery, updateData)
+				connection.commit()
+			else:
+				print "Inserting " + name
+				insertQuery = """INSERT INTO "fields" ("name", "address", "city", "state") VALUES (%s, %s, %s, %s);"""
+				insertData = (name, address, city, "UT")
+				cursor.execute(insertQuery, insertData)
+
+			connection.commit()
 
 #
 # To be run BEFORE 'UYSAGirlsGamesUpdate()'
@@ -215,89 +276,66 @@ def UYSAGirlsGamesUpdate():
 #
 #
 def UYSAGirlsTeamUpdate():
+	connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+	cursor = connection.cursor()
 	url = 'http://uysa.affinitysoccer.com/tour/public/info/accepted_list.asp?sessionguid=&tournamentguid=DF7BDAE9-AED4-4836-9B48-1BBE491CA60A&show=girls'
 	session = dryscrape.Session(base_url = url)
 	session.visit(url)
-	response = session.body()
-	tree = html.fromstring(response)
-	games = tree.xpath('//tbody/tr')
-	connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-	connection.connect()
-	while True:
-	  try:
-	    for game in games:
-		children = game.getchildren()
-		if len(children) < 8:
-			continue
-		else:
-			leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + children[1].getchildren()[0].getchildren()[0].attrib['href']
+	soup = BeautifulSoup(session.body())
+	leauges = soup.findAll("a", href=True, text="Brackets")
+	retries = 0
+        while True:
+          try:
+	    for league in leauges:
+			leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + league['href']
 			bracketSession = dryscrape.Session(base_url = leagueUrl)
 			bracketSession.visit(leagueUrl)
-			response = bracketSession.body()
-			tree = html.fromstring(response)
-			division = tree.xpath('//*[@id="tabs-1"]/div/table/tbody/tr[2]/td/table/tbody/tr[1]/td/a/div/table[1]/tbody/tr/td[1]')
-			teams = tree.xpath('//tbody/tr')
-			firstElement = 0
-			for team in teams:
-				if firstElement == 0:
-					firstElement = 1;
-					continue
+			soup2 = BeautifulSoup(bracketSession.body())
+			division = soup2.findAll("td", {"class": "title"})
+			division = division[1].contents[0]
+			table = soup2.findAll("table", {"class": "report"})
+			rows = table[0].findAll("tr")
+			# removing first row since its the title
+			del rows[0]
+			print leagueUrl
+			for row in rows:
+				rowContents = row.findChildren()
+				teamName = rowContents[1].contents[0]
+				teamId = rowContents[3].contents[0]
+
+				selectQuery = """SELECT * FROM "teams" WHERE teamid='{0}' AND facility = '{1}'; """.format(teamId, 3)
+				cursor.execute(selectQuery)
+				team = cursor.fetchone()
+
+				if team is not None:
+					print "Updating " + teamName
+					updateQuery = """UPDATE "teams" SET  "name" = %s, "division" = %s, "facility" = %s WHERE "id" = %s ; """
+					updateData = (teamName, division, 3, team[-1])
+					cursor.execute(updateQuery, updateData)
+					connection.commit()
 				else:
-					teamChildren = team.getchildren()
-					if len(teamChildren) != 5:
-						continue
+					print "Inserting " + teamName
+					insertQuery = """INSERT INTO "teams" ("name", "division", "teamid", "facility") VALUES (%s, %s, %s, %s);"""
+					insertData = (teamName, division, teamId, 3)
+					cursor.execute(insertQuery, insertData)
 
-					else:
-						teamName = team.getchildren()[1].text
-						teamId = team.getchildren()[3].text
-						params = urllib.urlencode({"where":json.dumps({
-							"teamId": teamId})})
-						connection.request('GET', '/1/classes/UYSAGirlsTeams?%s' % params,'', {
-							"X-Parse-Application-Id": applicationId,
-							"X-Parse-REST-API-Key": apiKey,
-							})
-
-						results = json.loads(connection.getresponse().read())
-
-						# Object doesn't exist, POST to create new. 
-
-						if results.values() == [[]]:
-						   call = 'POST'
-						   objId = ''
-						# Object exists, PUT to update existing.
-						else: 
-						   call = 'PUT'
-						   # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
-						   objId = '/%s' % results['results'][0]['objectId']
-
-						connection.request(call, '/1/classes/UYSAGirlsTeams%s' % objId, json.dumps({
-						             "teamId": teamId,
-						             "name": teamName,
-						             "division": division[0].text
-						           }), {
-						             "X-Parse-Application-Id": applicationId,
-						             "X-Parse-REST-API-Key": apiKey,
-						             "Content-Type": "application/json"
-						           })
-						results = json.loads(connection.getresponse().read())
-						print results
+				connection.commit()
 	  except Exception, e:
-            print str(e)
-            retries += 1
-            if retries < 5:
-              print "Error retry %s..." % retries
-              time.sleep(5)
-              connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-              connection.connect()
-              continue
-            else:
-              print "There was a failure in UYSAGirlsTeamUpdate(), coult not resolve after 5 attempts, aborting..."
-              return
-          break
+	    print str(e)
+	    retries += 1
+	    if retries < 5:
+	      print "Error retry %s..." % retries
+	      time.sleep(5)
+	      continue
+	    else:
+	      print "There was a failure in UYSAGirlsTeamUpdate(), coult not resolve after 5 attempts, aborting..."
+	      return
+	  break
 
 #
 # Single method to combine all update methods for UYSA girls facility.
 #
 # def UYSAGirls_run():
-#   UYSAGirlsTeamUpdate()
-#   UYSAGirlsGamesUpdate()
+UYSAGirlsTeamUpdate()
+# fields()
+# UYSAGirlsGamesUpdate()

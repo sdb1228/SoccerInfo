@@ -1,5 +1,5 @@
 from lxml import html
-import requests,json,httplib,urllib,time
+import requests,json,httplib,urllib,time, psycopg2, datetime
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
@@ -8,10 +8,10 @@ apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
 # Adds the team data for a given teamId.
 # This method is called from teamListUpdate()
 #
-def teamUpdate(id):
+def teamUpdate(id, connection, cursor):
   print id
-  connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-  connection.connect()
+  # connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
+  # connection.connect()
   retries = 0
   while True:
     try:
@@ -27,36 +27,23 @@ def teamUpdate(id):
 
       season = divisionArray[1]
 
-      params = urllib.urlencode({"where":json.dumps({
-        "teamId": id})})
-      connection.request('GET', '/1/classes/Teams?%s' % params,'', {
-             "X-Parse-Application-Id": applicationId,
-             "X-Parse-REST-API-Key": apiKey,
-           })
-      results = json.loads(connection.getresponse().read())
-      # Object doesn't exist, POST to create new.	
+      selectQuery = """SELECT * FROM "teams" WHERE teamid='{0}' AND facility=6; """.format(str(id))
+      cursor.execute(selectQuery)
+      team = cursor.fetchone()
+      if team is not None:
+        print "Updating"
+        updateQuery = """UPDATE "teams" SET  "name" = %s, "division" = %s, "facility" = %s WHERE "id" = %s ; """
+        updateData = (tree.xpath("//*[@id='mainright']/h1")[0].text.rstrip(), division, 6, team[-1])
+        cursor.execute(updateQuery, updateData)
+        connection.commit()
+      else:
+        print "Inserting"
+        insertQuery = """INSERT INTO "teams" ("name", "division", "teamid", "facility") VALUES (%s, %s, %s, %s);"""
+        insertData = (tree.xpath("//*[@id='mainright']/h1")[0].text.rstrip(), division, str(id), 6)
+        cursor.execute(insertQuery, insertData)
 
-      if results.values() == [[]]:
-         call = 'POST'
-         objId = ''
-      # Object exists, PUT to update existing.
-      else: 
-         call = 'PUT'
-         # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
-         objId = '/%s' % results['results'][0]['objectId']
+      connection.commit()
 
-      connection.request(call, '/1/classes/Teams%s' % objId, json.dumps({
-                   "teamId": id,
-                   "name": tree.xpath("//*[@id='mainright']/h1")[0].text.rstrip(),
-                   "division": division,
-                   "season": season
-                 }), {
-                   "X-Parse-Application-Id": applicationId,
-                   "X-Parse-REST-API-Key": apiKey,
-                   "Content-Type": "application/json"
-                 })
-      results = json.loads(connection.getresponse().read())
-      print results
     except Exception, e:
       print str(e)   
       retries += 1
@@ -76,12 +63,14 @@ def teamUpdate(id):
 # Scrapes the Let's Play site to obtain a list of all teams in (currently) facility 12 and stores the team data in the 'Teams' table of the Parse DB.
 #
 def teamListUpdate():
+  connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+  cursor = connection.cursor()
   page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams')
   tree = html.fromstring(page.text)
   # array of teams
   teamNames = tree.xpath("//a[contains(@href, '/facilities/12/teams/' )]")
   for team in teamNames:
-    teamUpdate(team.attrib['href'].split('/')[-1])
+    teamUpdate(team.attrib['href'].split('/')[-1], connection, cursor)
 
 #
 # To be run AFTER 'teamListUpdate()'
@@ -89,19 +78,21 @@ def teamListUpdate():
 #
 # teamId : Corresponds to the teamId that the team is referenced in the Let's Play href to view team data.
 #
-def gamesUpdate(teamId):
+def gamesUpdate(teamId, connection, cursor):
   retries = 0
   while True:
     try:
       print teamId
-      connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-      connection.connect()
       page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % teamId)
       tree = html.fromstring(page.text)
       # array of teams
       games = tree.xpath("//tr[td]")
+      count = 0
       for game in games:
         children = game.getchildren()
+        homeTeamScore = None
+        awayTeamScore = None
+
         if len(children) != 7:
           date = children[0].getchildren()[0].text
           field = children[1].text.strip()
@@ -111,110 +102,61 @@ def gamesUpdate(teamId):
           awayTeam = awayTeam.attrib['href'].split('/')[-1]
           homeTeam = homeTeam.attrib['href'].split('/')[-1]
 
-          # Add Team information for HomeTeam if it doesn't exist in the table.
-          params = urllib.urlencode({"where":json.dumps({
-                "teamId": homeTeam
-          })})
-          connection.request('GET', '/1/classes/Teams?%s' % params,'', {
-                 "X-Parse-Application-Id": applicationId,
-                 "X-Parse-REST-API-Key": apiKey,
-               })
-          results = json.loads(connection.getresponse().read())
-          # Object doesn't exist, POST to create new.
-          if results.values() == [[]]:
-      	    print "ADDING TEAM THAT DID NOT EXIST AND ADDING THEIR GAME LIST!"
-      	    teamUpdate(homeTeam)
-            gamesUpdate(homeTeam)
-          else:
-            homeTeamObjId = results['results'][0]['objectId']
+          selectQuery = """SELECT * FROM "teams" WHERE teamid='{0}' AND facility='{1}'; """.format(str(awayTeam), 6)
+          cursor.execute(selectQuery)
+          team = cursor.fetchone()
+          if team is None:
+            print "No Team Updating Now"
+            teamUpdate(awayTeam, connection, cursor)
 
-          # Add Team information for AwayTeam if it doesn't exist in the table.
-          params = urllib.urlencode({"where":json.dumps({
-                "teamId": awayTeam
-          })})
-          connection.request('GET', '/1/classes/Teams?%s' % params,'', {
-                 "X-Parse-Application-Id": applicationId,
-                 "X-Parse-REST-API-Key": apiKey,
-               })
-          results = json.loads(connection.getresponse().read())
-          # Object doesn't exist, POST to create new.
-          if results.values() == [[]]:
-            print "ADDING TEAM THAT DID NOT EXIST AND ADDING THEIR GAME LIST!"
-            teamUpdate(awayTeam)
-            gamesUpdate(awayTeam)
-          else:
-           awayTeamObjId = results['results'][0]['objectId']
+          selectQuery = """SELECT * FROM "teams" WHERE teamid='{0}' AND facility='{1}'; """.format(str(homeTeam), 6)
+          cursor.execute(selectQuery)
+          team = cursor.fetchone()
+          if team is None:
+            print "No Team Updating Now"
+            teamUpdate(homeTeam, connection, cursor)
 
           score = "".join(children[4].text.split()).split("-") 
           if score[0]:
-            homeTeamScore = score[0]
-            awayTeamScore = score[1]
+            homeTeamScore = int(score[0])
+            awayTeamScore = int(score[1])
+
+          neededDate = date[4:]
+          month = int(neededDate[:2])
+          day = neededDate[3] + neededDate[4]
+          day = int(day)
+          year = "20" + neededDate[6] + neededDate[7]
+          year = int(year)
+          gameTime = datetime.datetime.strptime(neededDate[9:], '%I:%M %p')
+          saveDate = datetime.datetime(year, month, day, gameTime.hour, gameTime.minute)
+
+          selectQuery = """SELECT id FROM "fields" WHERE name='{0}'; """.format(field)
+          cursor.execute(selectQuery)
+          DBfield = cursor.fetchone()
+          if DBfield is None:
+            print "Field doesn't match DB"
+            print field
+            continue
+          DBfield = DBfield[0]
+          
+
+          gamesSelectQuery = """SELECT * FROM "games" WHERE awayTeam=%s AND homeTeam=%s AND gamesdatetime=%s AND field = %s;"""
+          gamesSelectData = (awayTeam, homeTeam, saveDate, DBfield)
+          cursor.execute(gamesSelectQuery, gamesSelectData)
+          game = cursor.fetchone()
+          if game is not None:
+            print "Updating"
+            updateQuery = """UPDATE "games" SET  "awayteam"=%s, "hometeam"=%s,"gamesdatetime"=%s, "field"=%s,"hometeamscore"=%s, "awayteamscore"=%s WHERE "id" = %s ; """
+            updateData = (awayTeam, homeTeam, saveDate, int(DBfield), homeTeamScore, awayTeamScore, game[6])
+            cursor.execute(updateQuery, updateData)
           else:
-            homeTeamScore = ""
-            awayTeamScore = ""
+            print "Inserting"
+            insertQuery = """INSERT INTO "games" ("awayteam", "hometeam", "gamesdatetime", "field", "hometeamscore", "awayteamscore") VALUES (%s, %s, %s, %s, %s, %s);"""
+            insertData = (awayTeam, homeTeam, saveDate, int(DBfield), homeTeamScore, awayTeamScore)
+            cursor.execute(insertQuery, insertData)
 
-          params = urllib.urlencode({"where":json.dumps({
-            "date": date,
-            "field": field,
-            "homeTeam": homeTeam,
-            "awayTeam": awayTeam})})
-          connection.request('GET', '/1/classes/Games?%s' % params,'', {
-                 "X-Parse-Application-Id": applicationId,
-                 "X-Parse-REST-API-Key": apiKey,
-               })
-          results = json.loads(connection.getresponse().read())
-
-          # Object doesn't exist, POST to create new.
-          if results.values() == [[]]:
-             call = 'POST'
-             objId = ''
-          # Match exists, PUT to update existing match.
-          else:
-             call = 'PUT'
-             objId = '/%s' % results['results'][0]['objectId']
-
-          connection.request(call, '/1/classes/Games%s' % objId, json.dumps({
-                       "date": date,
-                       "field": field,
-                       "homeTeam": homeTeam,
-                       "awayTeam": awayTeam,
-                       "homeTeamScore": homeTeamScore,
-                       "awayTeamScore": awayTeamScore
-                     }), {
-                       "X-Parse-Application-Id": applicationId,
-                       "X-Parse-REST-API-Key": apiKey,
-                       "Content-Type": "application/json"
-                     })
-          results = json.loads(connection.getresponse().read())
-          print results
-          connection.request('PUT', '/1/classes/Games%s' % objId, json.dumps({
-                        "awayTeamPointer": {
-                         "__op": "AddRelation",
-                         "objects": [
-                           {
-                             "__type": "Pointer",
-                             "className": "Teams",
-                             "objectId": awayTeamObjId
-                           }
-                         ]
-                       },
-                       "homeTeamPointer": {
-                         "__op": "AddRelation",
-                         "objects": [
-                           {
-                             "__type": "Pointer",
-                             "className": "Teams",
-                             "objectId": homeTeamObjId
-                           }
-                         ]
-                       }
-                      }), {
-                       "X-Parse-Application-Id": applicationId,
-                       "X-Parse-REST-API-Key": apiKey,
-                       "Content-Type": "application/json"
-                     })
-          results = json.loads(connection.getresponse().read())
-          print results
+          connection.commit()
+          count += 1
 
         else:
           print"\n\n\n\Standings\n"
@@ -224,8 +166,6 @@ def gamesUpdate(teamId):
       if retries < 5:
         print "Error retry %s..." % retries
         time.sleep(5)
-        connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-        connection.connect()
         continue
       else:
         print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
@@ -237,19 +177,13 @@ def gamesUpdate(teamId):
 # Iterates across all teams stores in the 'Teams' table of the Parse DB and updates the 'Games' table according to the team's schedule.
 #
 def fullGameListUpdate():
-  # WARNING: Parse has a soft limit of 100 items per query.  This can be overwritten to a maximum of 1000.  In the immediate term this does not matter, but we will need to 
-  #  be prepared to handle this if we grow above 1000 items.
-  params = urllib.urlencode({"limit":1000})
-  connection = httplib.HTTPSConnection('api.parse.com', 443)
-  connection.connect()
-  connection.request('GET', '/1/classes/Teams?%s' % params, '', {
-         "X-Parse-Application-Id": applicationId,
-         "X-Parse-REST-API-Key": apiKey,
-       })
-  results = json.loads(connection.getresponse().read())
-  teams = results['results']
+  connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+  cursor = connection.cursor()
+  selectQuery = """SELECT * FROM "teams" WHERE facility=6; """
+  cursor.execute(selectQuery)
+  teams = cursor.fetchall()
   for team in teams:
-    gamesUpdate(team['teamId'])
+    gamesUpdate(team[3], connection, cursor)
 
 #
 # Single method to combine all update methods for Let's Play facility.

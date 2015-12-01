@@ -1,5 +1,6 @@
 from lxml import html
-import requests,json,httplib,urllib,sys,dryscrape,time
+from bs4 import BeautifulSoup
+import requests,json,httplib,urllib,sys,dryscrape,time, psycopg2
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
@@ -103,6 +104,71 @@ def utahSoccerAdultOutdoorTeamsUpdate():
           print "There was a failure in teamListUpdate(), could not resolve after 5 attempts, aborting..."
           return
       break
+
+
+
+def fields():
+  connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+  cursor = connection.cursor()
+  url = 'https://utahsoccer.org/fields-2/'
+  session = dryscrape.Session(base_url = url)
+  session.visit(url)
+  soup = BeautifulSoup(session.body())
+  fields = soup.findAll("div", {"class": "su-note-inner"})
+  for field in fields:
+   need = field.contents
+   globalFieldName = ""
+   for nee in need:
+    if not isinstance(nee, basestring):
+      if not nee:
+        continue
+      noo = nee.contents
+      if not noo:
+        continue
+      fieldName = noo[0].lstrip()
+      fieldName = fieldName.rstrip()
+      if fieldName == "Map":
+        continue
+      globalFieldName = fieldName
+    else:
+      address = nee.rstrip()
+      address = address.lstrip()
+      address = address.split(",")
+      if not address[0]:
+        continue
+
+
+      city = address[1]
+      city = city.rstrip()
+      city = city.lstrip()
+      address = address[0]
+      address = address.rstrip()
+      address = address.lstrip()
+      globalFieldName = globalFieldName.rstrip()
+      globalFieldName = globalFieldName.lstrip()
+      print address + " " + city+ " " + " " + globalFieldName
+
+      selectQuery = """SELECT * FROM "fields" WHERE name='{0}'; """.format(globalFieldName)
+      cursor.execute(selectQuery)
+      field = cursor.fetchone()
+
+      if field is not None:
+        print "Updating " + globalFieldName
+        updateQuery = """UPDATE "fields" SET  "name" = %s, "address" = %s, "city" = %s, "state" = %s WHERE "id" = %s ; """
+        updateData = (globalFieldName, address, city, "UT", field[5])
+        cursor.execute(updateQuery, updateData)
+        connection.commit()
+      else:
+        print "Inserting " + globalFieldName
+        insertQuery = """INSERT INTO "fields" ("name", "address", "city", "state") VALUES (%s, %s, %s, %s);"""
+        insertData = (globalFieldName, address, city, "UT")
+        cursor.execute(insertQuery, insertData)
+
+      connection.commit()
+      globalFieldName = ""
+      continue
+
+
 #
 # To be run AFTER 'utahSoccerAdultOutdoorGamesUpdate()'
 # Scrapes the Utah Soccer site for that teamId and stores a list of all games played by the corresponding team in the 'AdultOutdoorSoccerGames' table of the Parse DB.
@@ -326,7 +392,7 @@ def utahSoccerAdultOutdoorGamesUpdate():
 
 #
 # Single method to combine all update methods for Utah Soccer facility.
-
+fields()
 def utah_soccer_run():
   utahSoccerAdultOutdoorTeamsUpdate()
   utahSoccerAdultPlayedOutdoorGamesUpdate()
