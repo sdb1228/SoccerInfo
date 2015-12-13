@@ -392,7 +392,7 @@ def utahSoccerAdultOutdoorGamesUpdate():
 
 #
 # Single method to combine all update methods for Utah Soccer facility.
-fields()
+# fields()
 def utah_soccer_run():
   utahSoccerAdultOutdoorTeamsUpdate()
   utahSoccerAdultPlayedOutdoorGamesUpdate()

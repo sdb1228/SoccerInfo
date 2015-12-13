@@ -23,6 +23,7 @@ def youthTeamListUpdate():
 	del divisions[15]
 	del divisions[-1]
 	del divisions[-1]
+	del divisions[-1]
 	print len(divisions)
 	for division in divisions:
 			try:
@@ -30,7 +31,8 @@ def youthTeamListUpdate():
 				print "URL " + url
 				if url == "http://www.facebook.com/soccercityutah":
 					print "RETURNING"
-					return
+					break
+
 				stringDivision = ""
 				if division.span is None:
 					stringDivision = division.contents[0]
@@ -349,6 +351,9 @@ def getGameTime(url, session):
 				break
 			break
 
-#youthTeamListUpdate()
-teamListUpdate()
-fullGameListUpdate()
+def lets_play_run():
+	dryscrape.start_xvfb()
+	youthTeamListUpdate()
+	teamListUpdate()
+	fullGameListUpdate()
+
