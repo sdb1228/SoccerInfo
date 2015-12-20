@@ -1,9 +1,6 @@
 from lxml import html
 import requests,json,httplib,urllib,time, psycopg2, datetime
 
-applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
-apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
-
 #
 # Adds the team data for a given teamId.
 # This method is called from teamListUpdate()
@@ -85,8 +82,17 @@ def gamesUpdate(teamId, connection, cursor):
       print teamId
       page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % teamId)
       tree = html.fromstring(page.text)
-      # array of teams
-      games = tree.xpath("//tr[td]")
+      # array of games
+      # games = tree.xpath("//tr[td]")
+      
+      if len(tree.xpath("//table[1]")) == 0:
+        print "No games for teams yet"
+        break
+      games = tree.xpath("//table[1]")[0].getchildren()
+
+      # delete the title we don't need it
+      del games[0]
+
       count = 0
       for game in games:
         children = game.getchildren()
@@ -189,6 +195,6 @@ def fullGameListUpdate():
 # Single method to combine all update methods for Let's Play facility.
 #
 def lets_play_run():
-  teamListUpdate()
+  # teamListUpdate()
   fullGameListUpdate()
   #gamesUpdate()
