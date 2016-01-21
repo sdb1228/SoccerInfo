@@ -77,12 +77,15 @@ def teamListUpdate():
 #
 def gamesUpdate(teamId, connection, cursor):
   retries = 0
+  updating = False
+  rescheduled_ran = False
   while True:
     try:
       print teamId
       page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams/%s' % teamId)
       tree = html.fromstring(page.text)
       # array of games
+      # this is the old version.  Keep here just incase
       # games = tree.xpath("//tr[td]")
       
       if len(tree.xpath("//table[1]")) == 0:
@@ -145,7 +148,10 @@ def gamesUpdate(teamId, connection, cursor):
             continue
           DBfield = DBfield[0]
           
-
+          if not rescheduled_ran:
+            reschedule_calculator(games, teamId, cursor, connection)
+            rescheduled_ran = True
+          
           gamesSelectQuery = """SELECT * FROM "games" WHERE awayTeam=%s AND homeTeam=%s AND gamesdatetime=%s AND field = %s;"""
           gamesSelectData = (awayTeam, homeTeam, saveDate, DBfield)
           cursor.execute(gamesSelectQuery, gamesSelectData)
@@ -155,7 +161,17 @@ def gamesUpdate(teamId, connection, cursor):
             updateQuery = """UPDATE "games" SET  "awayteam"=%s, "hometeam"=%s,"gamesdatetime"=%s, "field"=%s,"hometeamscore"=%s, "awayteamscore"=%s WHERE "id" = %s ; """
             updateData = (awayTeam, homeTeam, saveDate, int(DBfield), homeTeamScore, awayTeamScore, game[6])
             cursor.execute(updateQuery, updateData)
+            updating = True
+
           else:
+            if updating:
+              print "Team " + teamId + " Has a reschedule"
+              selectQuery = """INSERT INTO "rescheduled_teams"  ("teamid") VALUES ('{0}'); """.format(teamId)
+              cursor.execute(selectQuery)
+              reschedule_calculator(games, teamId, cursor, connection)
+              rescheduled_ran = False
+              updating = False
+
             print "Inserting"
             insertQuery = """INSERT INTO "games" ("awayteam", "hometeam", "gamesdatetime", "field", "hometeamscore", "awayteamscore") VALUES (%s, %s, %s, %s, %s, %s);"""
             insertData = (awayTeam, homeTeam, saveDate, int(DBfield), homeTeamScore, awayTeamScore)
@@ -178,6 +194,47 @@ def gamesUpdate(teamId, connection, cursor):
         return
     break
 
+
+# Calculates which games are reschedules and delete the ones that aren't correct
+def reschedule_calculator(games, teamId, cursor, connection):
+  ourGamesQuery = """SELECT f1.name AS field, f1.address AS address, games.hometeam AS hometeam, games.awayteam AS awayteam, games.gamesdatetime, games.hometeamscore, games.awayteamscore, games.id 
+  FROM games 
+  INNER JOIN fields f1 ON f1.id=games.field 
+  WHERE games.awayteam='""" + teamId + """' OR games.hometeam='""" + teamId + """' ORDER BY games.gamesdatetime LIMIT 10;"""
+  cursor.execute(ourGamesQuery)
+  ourGames = cursor.fetchall()
+  gameCopy = list(ourGames)
+  deletingIndexs = []
+  for idx, game in enumerate(ourGames):
+    for theirGame in games:
+        children = theirGame.getchildren()
+        date = children[0].getchildren()[0].text
+        field = children[1].text.strip()
+        homeTeam = children[2].getchildren()[0]
+        awayTeam = children[3].getchildren()[0]
+
+        awayTeam = awayTeam.attrib['href'].split('/')[-1]
+        homeTeam = homeTeam.attrib['href'].split('/')[-1]
+        neededDate = date[4:]
+        month = int(neededDate[:2])
+        day = neededDate[3] + neededDate[4]
+        day = int(day)
+        year = "20" + neededDate[6] + neededDate[7]
+        year = int(year)
+        gameTime = datetime.datetime.strptime(neededDate[9:], '%I:%M %p')
+        saveDate = datetime.datetime(year, month, day, gameTime.hour, gameTime.minute)
+        if saveDate == game[4] and field == game[0] and homeTeam == game[2] and awayTeam[3]:
+          gameCopy.remove(game)
+          break
+
+
+  print len(gameCopy)
+  if gameCopy:
+    for deleteGame in gameCopy:      
+      deleteQuery = """ DELETE FROM games WHERE id='{0}';""".format(deleteGame[-1])
+      cursor.execute(deleteQuery)
+ 
+    
 #
 # To be run AFTER 'teamListUpdate()'
 # Iterates across all teams stores in the 'Teams' table of the Parse DB and updates the 'Games' table according to the team's schedule.
@@ -195,6 +252,6 @@ def fullGameListUpdate():
 # Single method to combine all update methods for Let's Play facility.
 #
 def lets_play_run():
-  # teamListUpdate()
+  teamListUpdate()
   fullGameListUpdate()
   #gamesUpdate()

@@ -17,6 +17,7 @@ def youthTeamListUpdate():
 		url= 'http://www.soccercityutah.com/#!youthschedules/c14mx'
 		session = dryscrape.Session(base_url = url)
 		session.set_timeout(30)
+		session.set_attribute('auto_load_images', False)
 		session.visit(url)
 		soup = BeautifulSoup(session.body())
 		divisions = soup.findAll("a", {"target": "_blank"})
@@ -31,7 +32,8 @@ def youthTeamListUpdate():
 				print "URL " + url
 				if url == "http://www.facebook.com/soccercityutah":
 					print "RETURNING"
-					break
+					connection.close()
+					return
 
 				stringDivision = ""
 				if division.span is None:
@@ -252,7 +254,10 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 				if len(dateSplit2[1]) == 1:
 					day = "0" + dateSplit2[1]
 
-				date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-15"+ " " + game_time
+				if months.get(dateSplit2[0]) == "12" or months.get(dateSplit2[0]) == "11" or months.get(dateSplit2[0]) == "10":
+					date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-15"+ " " + game_time
+				else:
+					date = dateSplit[0] + " " + months.get(dateSplit2[0]) + "-" + day + "-16"+ " " + game_time
 
 				neededDate = date[4:]
 				month = int(neededDate[:2])
@@ -260,6 +265,7 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 				day = int(day)
 				year = "20" + neededDate[6] + neededDate[7]
 				year = int(year)
+
 				gameTime = datetime.datetime.strptime(neededDate[9:], '%I:%M %p')
 				saveDate = datetime.datetime(year, month, day, gameTime.hour, gameTime.minute)
 
@@ -308,6 +314,7 @@ def fullGameListUpdate():
 	selectQuery = """SELECT * FROM "teams" WHERE facility=5; """
 	cursor.execute(selectQuery)
 	teams = cursor.fetchall()
+
 	session = dryscrape.Session()
         session.set_attribute('auto_load_images', False)
         session.set_timeout(20)
@@ -337,15 +344,17 @@ def getGameTime(url, session):
         		#session.set_attribute('auto_load_images', False)
         		#session.set_timeout(20)
 			print "second url = " + url
-                        session.visit(url)
-                        soup2 = BeautifulSoup(session.body())
-                        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+		        session.visit(url)
+		        soup2 = BeautifulSoup(session.body())
+		        print soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+		        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 		except Exception, e:
 			retries += 1
 			if retries < 5:
+				print e
 				print "error retry %s..." % retries
 				time.sleep(5)
-				continue
+				break
 			else:
 				print "aborting...."
 				break
@@ -353,7 +362,7 @@ def getGameTime(url, session):
 
 def lets_play_run():
 	dryscrape.start_xvfb()
-	youthTeamListUpdate()
+	# youthTeamListUpdate()
 	teamListUpdate()
 	fullGameListUpdate()
 

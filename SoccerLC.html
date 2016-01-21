@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<!-- saved from url=(0022)http://localhost:5000/ -->
+<html class="no-js" lang=""><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><title>SoccerLC</title><meta name="description" content=""><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="apple-touch-icon" href="http://localhost:5000/apple-touch-icon.png"><style id="css">/**
+ * React Starter Kit (https://www.reactstarterkit.com/)
+ *
+ * Copyright © 2014-2016 Kriasoft, LLC. All rights reserved.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE.txt file in the root directory of this source tree.
+ */
+
+/*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */
+
+/**
+ * 1. Set default font family to sans-serif.
+ * 2. Prevent iOS and IE text size adjust after device orientation change,
+ *    without disabling user zoom.
+ */
+
+html {
+  font-family: sans-serif; /* 1 */
+  -ms-text-size-adjust: 100%; /* 2 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+}
+
+/**
+ * Remove default margin.
+ */
+
+body {
+  margin: 0;
+}
+
+/* HTML5 display definitions
+   ========================================================================== */
+
+/**
+ * Correct `block` display not defined for any HTML5 element in IE 8/9.
+ * Correct `block` display not defined for `details` or `summary` in IE 10/11
+ * and Firefox.
+ * Correct `block` display not defined for `main` in IE 11.
+ */
+
+article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section, summary {
+  display: block;
+}
+
+/**
+ * 1. Correct `inline-block` display not defined in IE 8/9.
+ * 2. Normalize vertical alignment of `progress` in Chrome, Firefox, and Opera.
+ */
+
+audio, canvas, progress, video {
+  display: inline-block; /* 1 */
+  vertical-align: baseline; /* 2 */
+}
+
+/**
+ * Prevent modern browsers from displaying `audio` without controls.
+ * Remove excess height in iOS 5 devices.
+ */
+
+audio:not([controls]) {
+  display: none;
+  height: 0;
+}
+
+/**
+ * Address `[hidden]` styling not present in IE 8/9/10.
+ * Hide the `template` element in IE 8/9/10/11, Safari, and Firefox < 22.
+ */
+
+[hidden], template {
+  display: none;
+}
+
+/* Links
+   ========================================================================== */
+
+/**
+ * Remove the gray background color from active links in IE 10.
+ */
+
+a {
+  background-color: transparent;
+}
+
+/**
+ * Improve readability of focused elements when they are also in an
+ * active/hover state.
+ */
+
+a:active, a:hover {
+  outline: 0;
+}
+
+/* Text-level semantics
+   ========================================================================== */
+
+/**
+ * Address styling not present in IE 8/9/10/11, Safari, and Chrome.
+ */
+
+abbr[title] {
+  border-bottom: 1px dotted;
+}
+
+/**
+ * Address style set to `bolder` in Firefox 4+, Safari, and Chrome.
+ */
+
+b, strong {
+  font-weight: bold;
+}
+
+/**
+ * Address styling not present in Safari and Chrome.
+ */
+
+dfn {
+  font-style: italic;
+}
+
+/**
+ * Address variable `h1` font-size and margin within `section` and `article`
+ * contexts in Firefox 4+, Safari, and Chrome.
+ */
+
+h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+}
+
+/**
+ * Address styling not present in IE 8/9.
+ */
+
+mark {
+  background: #ff0;
+  color: #000;
+}
+
+/**
+ * Address inconsistent and variable font size in all browsers.
+ */
+
+small {
+  font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` affecting `line-height` in all browsers.
+ */
+
+sub, sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sup {
+  top: -0.5em;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+/* Embedded content
+   ========================================================================== */
+
+/**
+ * Remove border when inside `a` element in IE 8/9/10.
+ */
+
+img {
+  border: 0;
+}
+
+/**
+ * Correct overflow not hidden in IE 9/10/11.
+ */
+
+svg:not(:root) {
+  overflow: hidden;
+}
+
+/* Grouping content
+   ========================================================================== */
+
+/**
+ * Address margin not present in IE 8/9 and Safari.
+ */
+
+figure {
+  margin: 1em 40px;
+}
+
+/**
+ * Address differences between Firefox and other browsers.
+ */
+
+hr {
+  -webkit-box-sizing: content-box;
+          box-sizing: content-box;
+  height: 0;
+}
+
+/**
+ * Contain overflow in all browsers.
+ */
+
+pre {
+  overflow: auto;
+}
+
+/**
+ * Address odd `em`-unit font size rendering in all browsers.
+ */
+
+code, kbd, pre, samp {
+  font-family: monospace, monospace;
+  font-size: 1em;
+}
+
+/* Forms
+   ========================================================================== */
+
+/**
+ * Known limitation: by default, Chrome and Safari on OS X allow very limited
+ * styling of `select`, unless a `border` property is set.
+ */
+
+/**
+ * 1. Correct color not being inherited.
+ *    Known issue: affects color of disabled elements.
+ * 2. Correct font properties not being inherited.
+ * 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
+ */
+
+button, input, optgroup, select, textarea {
+  color: inherit; /* 1 */
+  font: inherit; /* 2 */
+  margin: 0; /* 3 */
+}
+
+/**
+ * Address `overflow` set to `hidden` in IE 8/9/10/11.
+ */
+
+button {
+  overflow: visible;
+}
+
+/**
+ * Address inconsistent `text-transform` inheritance for `button` and `select`.
+ * All other form control elements do not inherit `text-transform` values.
+ * Correct `button` style inheritance in Firefox, IE 8/9/10/11, and Opera.
+ * Correct `select` style inheritance in Firefox.
+ */
+
+button, select {
+  text-transform: none;
+}
+
+/**
+ * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+ *    and `video` controls.
+ * 2. Correct inability to style clickable `input` types in iOS.
+ * 3. Improve usability and consistency of cursor style between image-type
+ *    `input` and others.
+ */
+
+button, html input[type="button"], input[type="reset"], input[type="submit"] {
+  -webkit-appearance: button; /* 2 */
+  cursor: pointer; /* 3 */
+}
+
+/**
+ * Re-set default cursor for disabled elements.
+ */
+
+button[disabled], html input[disabled] {
+  cursor: default;
+}
+
+/**
+ * Remove inner padding and border in Firefox 4+.
+ */
+
+button::-moz-focus-inner, input::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/**
+ * Address Firefox 4+ setting `line-height` on `input` using `!important` in
+ * the UA stylesheet.
+ */
+
+input {
+  line-height: normal;
+}
+
+/**
+ * It's recommended that you don't attempt to style these elements.
+ * Firefox's implementation doesn't respect box-sizing, padding, or width.
+ *
+ * 1. Address box sizing set to `content-box` in IE 8/9/10.
+ * 2. Remove excess padding in IE 8/9/10.
+ */
+
+input[type="checkbox"], input[type="radio"] {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box; /* 1 */
+  padding: 0; /* 2 */
+}
+
+/**
+ * Fix the cursor style for Chrome's increment/decrement buttons. For certain
+ * `font-size` values of the `input`, it causes the cursor style of the
+ * decrement button to change from `default` to `text`.
+ */
+
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/**
+ * 1. Address `appearance` set to `searchfield` in Safari and Chrome.
+ * 2. Address `box-sizing` set to `border-box` in Safari and Chrome.
+ */
+
+input[type="search"] {
+  -webkit-appearance: textfield; /* 1 */
+  -webkit-box-sizing: content-box;
+          box-sizing: content-box; /* 2 */
+}
+
+/**
+ * Remove inner padding and search cancel button in Safari and Chrome on OS X.
+ * Safari (but not Chrome) clips the cancel button when the search input has
+ * padding (and `textfield` appearance).
+ */
+
+input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/**
+ * Define consistent border, margin, and padding.
+ */
+
+fieldset {
+  border: 1px solid #c0c0c0;
+  margin: 0 2px;
+  padding: 0.35em 0.625em 0.75em;
+}
+
+/**
+ * 1. Correct `color` not being inherited in IE 8/9/10/11.
+ * 2. Remove padding so people aren't caught out if they zero out fieldsets.
+ */
+
+legend {
+  border: 0; /* 1 */
+  padding: 0; /* 2 */
+}
+
+/**
+ * Remove default vertical scrollbar in IE 8/9/10/11.
+ */
+
+textarea {
+  overflow: auto;
+}
+
+/**
+ * Don't inherit the `font-weight` (applied by a rule above).
+ * NOTE: the default cannot safely be changed in Chrome and Safari on OS X.
+ */
+
+optgroup {
+  font-weight: bold;
+}
+
+/* Tables
+   ========================================================================== */
+
+/**
+ * Remove most spacing between table cells.
+ */
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+td, th {
+  padding: 0;
+}
+
+/*! React Starter Kit | MIT License | https://www.reactstarterkit.com/ */
+
+/*
+ * Colors
+ * ========================================================================== */ /* #222 */   /* #404040 */ /* #555 */ /* #777 */ /* #eee */
+
+/*
+ * Typography
+ * ========================================================================== */
+
+/*
+ * Layout
+ * ========================================================================== */
+
+/*
+ * Media queries breakpoints
+ * ========================================================================== */  /* Extra small screen / phone */  /* Small screen / tablet */  /* Medium screen / desktop */ /* Large screen / wide desktop */
+
+/*
+ * Animations
+ * ========================================================================== */
+
+/*
+ * Base styles
+ * ========================================================================== */
+
+html {
+  color: #222;
+  font-weight: 100;
+  font-size: 1em; /* ~16px; */
+  font-family: 'Segoe UI','HelveticaNeue-Light',sans-serif;
+  line-height: 1.375; /* ~22px */
+}
+
+/*
+ * Remove text-shadow in selection highlight:
+ * https://twitter.com/miketaylr/status/12228805301
+ *
+ * These selection rule sets have to be separate.
+ * Customize the background color to match your design.
+ */
+
+::-moz-selection {
+  background: #b3d4fc;
+  text-shadow: none;
+}
+
+::selection {
+  background: #b3d4fc;
+  text-shadow: none;
+}
+
+/*
+ * A better looking default horizontal rule
+ */
+
+hr {
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 1em 0;
+  padding: 0;
+}
+/*
+ * Remove the gap between audio, canvas, iframes,
+ * images, videos and the bottom of their containers:
+ * https://github.com/h5bp/html5-boilerplate/issues/440
+ */
+
+audio, canvas, iframe, img, svg, video {
+  vertical-align: middle;
+}
+
+/*
+ * Remove default fieldset styles.
+ */
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * Allow only vertical resizing of textareas.
+ */
+
+textarea {
+  resize: vertical;
+}
+
+/*
+ * Browser upgrade prompt
+ * ========================================================================== */
+
+.App_browserupgrade_1t4 {
+  margin: 0.2em 0;
+  background: #ccc;
+  color: #000;
+  padding: 0.2em 0;
+}
+.App_childIOS_hOc{
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+}
+.App_childAndroid_381{
+  width: 200px;
+}
+.App_parent_29m{
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+/*
+ * Print styles
+ * Inlined to avoid the additional HTTP request:
+ * http://www.phpied.com/delay-loading-your-print-css/
+ * ========================================================================== */
+
+@media print {
+  *, *:before, *:after {
+    background: transparent !important;
+    color: #000 !important; /* Black prints faster: http://www.sanbeiji.com/archives/953 */
+    -webkit-box-shadow: none !important;
+            box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a, a:visited {
+    text-decoration: underline;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+  }
+
+  abbr[title]:after {
+    content: " (" attr(title) ")";
+  }
+
+  /*
+   * Don't show links that are fragment identifiers,
+   * or use the `javascript:` pseudo protocol
+   */
+
+  a[href^="#"]:after, a[href^="javascript:"]:after {
+    content: "";
+  }
+
+  pre, blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  /*
+   * Printing Tables:
+   * http://css-discuss.incutio.com/wiki/Printing_Tables
+   */
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr, img {
+    page-break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+  }
+
+  p, h2, h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2, h3 {
+    page-break-after: avoid;
+  }
+}
+/**
+ * React Starter Kit (https://www.reactstarterkit.com/)
+ *
+ * Copyright © 2014-2016 Kriasoft, LLC. All rights reserved.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE.txt file in the root directory of this source tree.
+ */
+
+/*
+ * Colors
+ * ========================================================================== */ /* #222 */   /* #404040 */ /* #555 */ /* #777 */ /* #eee */
+
+/*
+ * Typography
+ * ========================================================================== */
+
+/*
+ * Layout
+ * ========================================================================== */
+
+/*
+ * Media queries breakpoints
+ * ========================================================================== */  /* Extra small screen / phone */  /* Small screen / tablet */  /* Medium screen / desktop */ /* Large screen / wide desktop */
+
+/*
+ * Animations
+ * ========================================================================== */
+
+.Header_root_14I {
+  background: #373277;
+  color: #fff;
+}
+
+.Header_container_izf {
+  margin: 0 auto;
+  padding: 20px 0;
+  max-width: 1000px;
+}
+
+.Header_brand_1-T {
+  color: rgb(146, 229, 252);
+  text-decoration: none;
+  font-size: 1.75em; /* ~28px */
+}
+
+.Header_brandTxt_162 {
+  margin-left: 10px;
+}
+
+.Header_nav_3wx {
+  float: right;
+  margin-top: 6px;
+}
+
+.Header_banner_UgC {
+  text-align: center;
+}
+
+.Header_bannerTitle_3Qi {
+  margin: 0;
+  padding: 10px;
+  font-weight: normal;
+  font-size: 4em;
+  line-height: 1em;
+}
+
+.Header_bannerDesc_3Ow {
+  padding: 0;
+  color: rgba(255, 255, 255, .5);
+  font-size: 1.25em;
+  margin: 0;
+}
+/**
+ * React Starter Kit (https://www.reactstarterkit.com/)
+ *
+ * Copyright © 2014-2016 Kriasoft, LLC. All rights reserved.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE.txt file in the root directory of this source tree.
+ */
+
+.Navigation_root_2Gx {
+
+}
+
+.Navigation_link_12k {
+  display: inline-block;
+  padding: 3px 8px;
+  text-decoration: none;
+  font-size: 1.125em; /* ~18px */
+}
+
+.Navigation_link_12k, .Navigation_link_12k:active, .Navigation_link_12k:visited {
+  color: rgba(255, 255, 255, .6);
+}
+
+.Navigation_link_12k:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.Navigation_highlight_2cu {
+  margin-right: 8px;
+  margin-left: 8px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, .15);
+  color: #fff;
+}
+
+.Navigation_highlight_2cu:hover {
+  background: rgba(0, 0, 0, .3);
+}
+
+.Navigation_spacer_2MV {
+  color: rgba(255, 255, 255, .3);
+}
+/**
+ * React Starter Kit (https://www.reactstarterkit.com/)
+ *
+ * Copyright © 2014-2016 Kriasoft, LLC. All rights reserved.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE.txt file in the root directory of this source tree.
+ */
+
+/*
+ * Colors
+ * ========================================================================== */ /* #222 */   /* #404040 */ /* #555 */ /* #777 */ /* #eee */
+
+/*
+ * Typography
+ * ========================================================================== */
+
+/*
+ * Layout
+ * ========================================================================== */
+
+/*
+ * Media queries breakpoints
+ * ========================================================================== */  /* Extra small screen / phone */  /* Small screen / tablet */  /* Medium screen / desktop */ /* Large screen / wide desktop */
+
+/*
+ * Animations
+ * ========================================================================== */
+
+.ContentPage_root_1Kg {
+
+}
+
+.ContentPage_container_1JT {
+  margin: 0 auto;
+  padding: 0 0 40px;
+  max-width: 1000px;
+}
+/**
+ * React Starter Kit (https://www.reactstarterkit.com/)
+ *
+ * Copyright © 2014-2016 Kriasoft, LLC. All rights reserved.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE.txt file in the root directory of this source tree.
+ */
+
+/*
+ * Colors
+ * ========================================================================== */ /* #222 */   /* #404040 */ /* #555 */ /* #777 */ /* #eee */
+
+/*
+ * Typography
+ * ========================================================================== */
+
+/*
+ * Layout
+ * ========================================================================== */
+
+/*
+ * Media queries breakpoints
+ * ========================================================================== */  /* Extra small screen / phone */  /* Small screen / tablet */  /* Medium screen / desktop */ /* Large screen / wide desktop */
+
+/*
+ * Animations
+ * ========================================================================== */
+
+.Feedback_root_LW7 {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.Feedback_container_3dV {
+  margin: 0 auto;
+  padding: 20px 8px;
+  max-width: 1000px;
+  text-align: center;
+  font-size: 1.5em; /* ~24px */
+}
+
+.Feedback_link_17l, .Feedback_link_17l:active, .Feedback_link_17l:hover, .Feedback_link_17l:visited {
+  color: #333;
+  text-decoration: none;
+}
+
+.Feedback_link_17l:hover {
+  text-decoration: underline;
+}
+
+.Feedback_spacer_Iut {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+/**
+ * React Starter Kit (https://www.reactstarterkit.com/)
+ *
+ * Copyright © 2014-2016 Kriasoft, LLC. All rights reserved.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE.txt file in the root directory of this source tree.
+ */
+
+/*
+ * Colors
+ * ========================================================================== */ /* #222 */   /* #404040 */ /* #555 */ /* #777 */ /* #eee */
+
+/*
+ * Typography
+ * ========================================================================== */
+
+/*
+ * Layout
+ * ========================================================================== */
+
+/*
+ * Media queries breakpoints
+ * ========================================================================== */  /* Extra small screen / phone */  /* Small screen / tablet */  /* Medium screen / desktop */ /* Large screen / wide desktop */
+
+/*
+ * Animations
+ * ========================================================================== */
+
+.Footer_root_3dP {
+  background: #333;
+  color: #fff;
+}
+
+.Footer_container_26p {
+  margin: 0 auto;
+  padding: 20px 15px;
+  max-width: 1000px;
+  text-align: center;
+}
+
+.Footer_text_tTp {
+  color: rgba(255, 255, 255, .5);
+}
+
+.Footer_textMuted_1h3 {
+  color: rgba(255, 255, 255, .3);
+}
+
+.Footer_spacer_3n7 {
+  color: rgba(255, 255, 255, .3);
+}
+
+.Footer_text_tTp, .Footer_link_NoJ {
+  padding: 2px 5px;
+  font-size: 1em;
+}
+
+.Footer_link_NoJ, .Footer_link_NoJ:active, .Footer_link_NoJ:visited {
+  color: rgba(255, 255, 255, .6);
+  text-decoration: none;
+}
+
+.Footer_link_NoJ:hover {
+  color: rgba(255, 255, 255, 1);
+}
+</style></head><body><div id="app"><div data-reactid=".257tpqq0934" data-react-checksum="2016964474"><div class="Header_root_14I" data-reactid=".257tpqq0934.0"><div class="Header_container_izf" data-reactid=".257tpqq0934.0.0"><div class="Navigation_root_2Gx Header_nav_3wx" role="navigation" data-reactid=".257tpqq0934.0.0.0"><a class="Navigation_link_12k" href="http://localhost:5000/about" data-reactid=".257tpqq0934.0.0.0.0">About</a><a class="Navigation_link_12k" href="http://localhost:5000/contact" data-reactid=".257tpqq0934.0.0.0.1">Contact</a><span class="Navigation_spacer_2MV" data-reactid=".257tpqq0934.0.0.0.2"> | </span><a class="Navigation_link_12k" href="http://localhost:5000/login" data-reactid=".257tpqq0934.0.0.0.3">Log in</a><span class="Navigation_spacer_2MV" data-reactid=".257tpqq0934.0.0.0.4">or</span><a class="Navigation_link_12k Navigation_highlight_2cu" href="http://localhost:5000/register" data-reactid=".257tpqq0934.0.0.0.5">Sign up</a></div><a class="Header_brand_1-T" href="./SoccerLC_files/SoccerLC.html" data-reactid=".257tpqq0934.0.0.1"><img src="data:image/png;base64,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" width="38" height="38" alt="React" data-reactid=".257tpqq0934.0.0.1.0"><span class="Header_brandTxt_162" data-reactid=".257tpqq0934.0.0.1.1">SoccerLC</span></a><div class="Header_banner_UgC" data-reactid=".257tpqq0934.0.0.2"><h1 class="Header_bannerTitle_3Qi" data-reactid=".257tpqq0934.0.0.2.0">SoccerLC</h1><p class="Header_bannerDesc_3Ow" data-reactid=".257tpqq0934.0.0.2.1">One Touch Schedules</p></div></div></div><div class="ContentPage_root_1Kg" data-reactid=".257tpqq0934.1"><div class="ContentPage_container_1JT" data-reactid=".257tpqq0934.1.0"><div data-reactid=".257tpqq0934.1.0.1"><div class="parent"><div class="childIOS"><h3>Runtime Components</h3><dl><dt><a href="https://facebook.github.io/react/">React</a></dt><dd>A JavaScript library for building user interfaces, developed by Facebook</dd><dt><a href="http://facebook.github.io/flux/">Flux</a></dt><dd>Application architecture for building user interfaces</dd></dl></div><div class="childAndroid"><h3>Development Tools</h3><dl><dt><a href="http://webpack.github.io/">Webpack</a></dt><dd>Compiles front-end source code into modules / bundles</dd><dt><a href="http://www.browsersync.io/">BrowserSync</a></dt><dd>A lightweight HTTP server for development</dd></dl></div><div><h3>Fork me on GitHub</h3><p><a href="https://github.com/kriasoft/react-starter-kit">github.com/kriasoft/react-starter-kit</a></p></div></div></div></div></div><div class="Feedback_root_LW7" data-reactid=".257tpqq0934.2"><div class="Feedback_container_3dV" data-reactid=".257tpqq0934.2.0"><a class="Feedback_link_17l" href="https://gitter.im/kriasoft/react-starter-kit" data-reactid=".257tpqq0934.2.0.0">Ask a question</a><span class="Feedback_spacer_Iut" data-reactid=".257tpqq0934.2.0.1">|</span><a class="Feedback_link_17l" href="https://github.com/kriasoft/react-starter-kit/issues/new" data-reactid=".257tpqq0934.2.0.2">Report an issue</a></div></div><div class="Footer_root_3dP" data-reactid=".257tpqq0934.3"><div class="Footer_container_26p" data-reactid=".257tpqq0934.3.0"><span class="Footer_text_tTp" data-reactid=".257tpqq0934.3.0.0">© SoccerLC</span><span class="Footer_spacer_3n7" data-reactid=".257tpqq0934.3.0.1">·</span><a class="Footer_link_NoJ" href="./SoccerLC_files/SoccerLC.html" data-reactid=".257tpqq0934.3.0.2">Home</a><span class="Footer_spacer_3n7" data-reactid=".257tpqq0934.3.0.3">·</span><a class="Footer_link_NoJ" href="http://localhost:5000/privacy" data-reactid=".257tpqq0934.3.0.4">Privacy</a><span class="Footer_spacer_3n7" data-reactid=".257tpqq0934.3.0.5">·</span><a class="Footer_link_NoJ" href="http://localhost:5000/not-found" data-reactid=".257tpqq0934.3.0.6">Not Found</a></div></div></div></div><script src="./SoccerLC_files/analytics.js"></script><script src="./SoccerLC_files/main.js"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='https://www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create','UA-XXXXX-X','auto');ga('send','pageview');</script></body></html>

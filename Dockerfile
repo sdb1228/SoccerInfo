@@ -11,8 +11,12 @@ RUN apt-get update \
 
 RUN pip install dryscrape
 
+RUN apt-get install vim -y
+
 COPY ./*.py /scrapers/
 
 WORKDIR scrapers
 
 CMD python -c 'import lets_play; lets_play.lets_play_run()'
+
+CMD python -c 'import soccer_city; soccer_city.lets_play_run()'
