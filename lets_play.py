@@ -7,8 +7,6 @@ import requests,json,httplib,urllib,time, psycopg2, datetime
 #
 def teamUpdate(id, connection, cursor):
   print id
-  # connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-  # connection.connect()
   retries = 0
   while True:
     try:
@@ -47,8 +45,6 @@ def teamUpdate(id, connection, cursor):
       if retries < 5:
         print "Error retry %s..." % retries
         time.sleep(5)
-        connection = httplib.HTTPSConnection('api.parse.com', 443, timeout=120)
-        connection.connect()
         continue
       else:
         print "There was a failure in teamListUpdate(), could not resolve after 5 attempts, aborting..."
@@ -57,10 +53,9 @@ def teamUpdate(id, connection, cursor):
 
 #
 # To be run before 'fullGameListUpdate()' to seed iterable data.
-# Scrapes the Let's Play site to obtain a list of all teams in (currently) facility 12 and stores the team data in the 'Teams' table of the Parse DB.
 #
 def teamListUpdate():
-  connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+  connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
   cursor = connection.cursor()
   page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams')
   tree = html.fromstring(page.text)
@@ -71,7 +66,6 @@ def teamListUpdate():
 
 #
 # To be run AFTER 'teamListUpdate()'
-# Given a teamId, scrapes the Let's Play site for that teamId and stores a list of all games played by the corresponding team in the 'Games' table of the Parse DB.
 #
 # teamId : Corresponds to the teamId that the team is referenced in the Let's Play href to view team data.
 #
@@ -237,10 +231,9 @@ def reschedule_calculator(games, teamId, cursor, connection):
     
 #
 # To be run AFTER 'teamListUpdate()'
-# Iterates across all teams stores in the 'Teams' table of the Parse DB and updates the 'Games' table according to the team's schedule.
 #
 def fullGameListUpdate():
-  connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+  connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
   cursor = connection.cursor()
   selectQuery = """SELECT * FROM "teams" WHERE facility=6; """
   cursor.execute(selectQuery)

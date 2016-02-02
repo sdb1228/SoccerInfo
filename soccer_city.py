@@ -1,15 +1,12 @@
 from bs4 import BeautifulSoup
 import requests,json,httplib,sys,dryscrape,urllib,time, datetime, psycopg2
 
-applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
-apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
-
 #
 # To be run before 'fullGameListUpdate()' to seed iterable data.
 # Scrapes the Soccer City site to obtain a list of all youth teams playing currently at Soccer City.
 #
 def youthTeamListUpdate():
-	connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+	connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
   	cursor = connection.cursor()
 	count = 0
 	divisions = []
@@ -177,6 +174,10 @@ def teamListUpdate():
 	    except Exception, e:
               print str(e)
               retries += 1
+              connection.close
+              cursor.close
+              connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+              cursor = connection.cursor()
               if retries < 5:
                 print "Error retry %s..." % retries
                 time.sleep(5)
@@ -299,6 +300,10 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 		except Exception, e:
 			print str(e)
 			retries += 1
+			connection.close
+			cursor.close
+			connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+			cursor = connection.cursor()
 			if retries < 6:
 				time.sleep(retries*retries*retries)
 				print "Error retry %s..." % retries
@@ -327,6 +332,10 @@ def fullGameListUpdate():
 	    except Exception, e:
               print str(e)
               retries += 1
+              connection.close
+              cursor.close
+              connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+              cursor = connection.cursor()
               if retries < 5:
                 print "Error retry %s..." % retries
                 time.sleep(5)
@@ -350,6 +359,10 @@ def getGameTime(url, session):
 		        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 		except Exception, e:
 			retries += 1
+			connection.close
+			cursor.close
+			connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+			cursor = connection.cursor()
 			if retries < 5:
 				print e
 				print "error retry %s..." % retries
