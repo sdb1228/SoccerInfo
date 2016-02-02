@@ -97,7 +97,7 @@ def youthTeamListUpdate():
 # Scrapes the Soccer City site to obtain a list of all teams in (currently) facility 12 and stores the team data in the 'Teams' table of the Parse DB.
 #
 def teamListUpdate():
-	connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+	connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
   	cursor = connection.cursor()
 	divisions = []
 	while len(divisions) == 0:
@@ -127,6 +127,7 @@ def teamListUpdate():
 
 		print stringDivision
 		print "\n\n"
+
 		session = dryscrape.Session(base_url = url)
 		session.set_timeout(30)
 		session.visit(url)
@@ -174,10 +175,6 @@ def teamListUpdate():
 	    except Exception, e:
               print str(e)
               retries += 1
-              connection.close
-              cursor.close
-              connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
-              cursor = connection.cursor()
               if retries < 5:
                 print "Error retry %s..." % retries
                 time.sleep(5)
@@ -215,7 +212,13 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 			teamNameWithoutSpace = teamName.replace(u' ', '%20') 
 			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamNameWithoutSpace + ".aspx?framed=1"
 			print url
-			session.visit(url)
+			try:
+				session.visit(url)
+			except Exception, e:
+				session = dryscrape.Session()
+				session.set_attribute('auto_load_images', False)
+				session.set_timeout(20)				
+			
 			print "after url"
 			soup = BeautifulSoup(session.body())
 			errorMessage = soup.findAll("div", {"id": "ErrorMessage"})
@@ -300,10 +303,6 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 		except Exception, e:
 			print str(e)
 			retries += 1
-			connection.close
-			cursor.close
-			connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
-			cursor = connection.cursor()
 			if retries < 6:
 				time.sleep(retries*retries*retries)
 				print "Error retry %s..." % retries
@@ -314,7 +313,7 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 		break
 
 def fullGameListUpdate():
-	connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
+	connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
 	cursor = connection.cursor()
 	selectQuery = """SELECT * FROM "teams" WHERE facility=5; """
 	cursor.execute(selectQuery)
@@ -332,10 +331,6 @@ def fullGameListUpdate():
 	    except Exception, e:
               print str(e)
               retries += 1
-              connection.close
-              cursor.close
-              connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
-              cursor = connection.cursor()
               if retries < 5:
                 print "Error retry %s..." % retries
                 time.sleep(5)
@@ -349,9 +344,9 @@ def getGameTime(url, session):
 	retries = 0
 	while True:
 		try:
-			#session = dryscrape.Session()
-        		#session.set_attribute('auto_load_images', False)
-        		#session.set_timeout(20)
+			session = dryscrape.Session()
+        		session.set_attribute('auto_load_images', False)
+        		session.set_timeout(20)
 			print "second url = " + url
 		        session.visit(url)
 		        soup2 = BeautifulSoup(session.body())
@@ -359,15 +354,11 @@ def getGameTime(url, session):
 		        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 		except Exception, e:
 			retries += 1
-			connection.close
-			cursor.close
-			connection = psycopg2.connect(host='54.68.232.199',database='Soccer_Games',user='dburnett',password='doug1')
-			cursor = connection.cursor()
 			if retries < 5:
 				print e
 				print "error retry %s..." % retries
 				time.sleep(5)
-				break
+				continue
 			else:
 				print "aborting...."
 				break
