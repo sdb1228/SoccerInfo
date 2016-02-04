@@ -125,6 +125,7 @@ def teamListUpdate():
 		else:
 			stringDivision = division.span.contents[0]
 
+		stringDivision = stringDivision.replace(u'\xa0', u' ')
 		print stringDivision
 		print "\n\n"
 
