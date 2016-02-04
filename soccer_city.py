@@ -129,14 +129,25 @@ def teamListUpdate():
 		print stringDivision
 		print "\n\n"
 
+		if stringDivision == "Click Here." or stringDivision == "Click Here!":
+			print "Bad link"
+			break
+
 		session = dryscrape.Session(base_url = url)
 		session.set_timeout(30)
 		session.visit(url)
 		soup = BeautifulSoup(session.body())
 		teams = soup.findAll("a")
+
 		if soup.find("a", {"href": "#stats"}) is not None:
 			del teams[0]
 
+		betterstrat = soup.findAll("table",{"id": "ctl00_C_Standings_GridView1"})
+		teams2 = betterstrat[0].findAll("tr")
+
+		if len(teams2) == 1:
+			print "No teams in this division"
+			break
 
 		for x in xrange(1,18):
 			del teams[0]
@@ -144,8 +155,8 @@ def teamListUpdate():
 		betterstrat = ""
 		stringDivision = stringDivision.replace(u'\xa0', ' ')
 		betterstrat = soup.findAll("table",{"id": "ctl00_C_Standings_GridView1"})
-
 		teams2 = betterstrat[0].findAll("tr")
+
 		del teams2[0]
 
 		for thing in teams2:
