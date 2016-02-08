@@ -227,9 +227,8 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 			try:
 				session.visit(url)
 			except Exception, e:
-				session = dryscrape.Session()
-				session.set_attribute('auto_load_images', False)
-				session.set_timeout(20)				
+				print "COULDN'T GET " + teamName + " GAMES"
+				return
 			
 			print "after url"
 			soup = BeautifulSoup(session.body())
@@ -313,6 +312,7 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 				connection.commit()
 
 		except Exception, e:
+			return
 			print str(e)
 			retries += 1
 			if retries < 6:
@@ -338,10 +338,13 @@ def fullGameListUpdate():
 	  retries = 0
 	  while True:
 	    try:
-		  gamesUpdate(team[3], team[1], session, cursor, connection)
+			session.reset()
+			gamesUpdate(team[3], team[1], session, cursor, connection)
 
 	    except Exception, e:
               print str(e)
+              print "MAJOR PROBLEM IN MAIN FULL GAMES"
+              return
               retries += 1
               if retries < 5:
                 print "Error retry %s..." % retries
@@ -365,6 +368,8 @@ def getGameTime(url, session):
 		        print soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 		        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 		except Exception, e:
+			print "COULDN'T GET SECOND URL"
+			return
 			retries += 1
 			if retries < 5:
 				print e
