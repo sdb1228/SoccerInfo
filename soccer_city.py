@@ -344,7 +344,8 @@ def fullGameListUpdate():
 	    except Exception, e:
               print str(e)
               print "MAJOR PROBLEM IN MAIN FULL GAMES"
-              return
+              dryscrape.stop_xvfb()
+              dryscrape.start_xvfb()
               retries += 1
               if retries < 5:
                 print "Error retry %s..." % retries
@@ -359,15 +360,14 @@ def getGameTime(url, session):
 	retries = 0
 	while True:
 		try:
-			session = dryscrape.Session()
-        		session.set_attribute('auto_load_images', False)
-        		session.set_timeout(20)
 			print "second url = " + url
 		        session.visit(url)
 		        soup2 = BeautifulSoup(session.body())
 		        print soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
+
 		        return soup2.find("span", {"id": "ctl00_C_lblGameTime"}).contents[0]
 		except Exception, e:
+			print str(e)
 			print "COULDN'T GET SECOND URL"
 			return
 			retries += 1
