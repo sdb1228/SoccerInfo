@@ -332,7 +332,14 @@ def parseDate(date, time):
 	day = int(day)
 	year = "20" + neededDate[6] + neededDate[7]
 	year = int(year)
-	gameTime = datetime.datetime.strptime(neededDate[9:], '%I:%M %p')
+	cleanDate = neededDate[9:]
+	cleanDate = cleanDate.lstrip()
+	cleanDate = cleanDate.rstrip()
+	cleanDate = cleanDate.replace("&bbsp", "")
+	cleanDate = cleanDate.replace("&sbsp", "")
+	cleanDate = cleanDate.replace("sbsp;", "")
+	cleanDate = cleanDate.replace("bbsp;", "")
+	gameTime = datetime.datetime.strptime(cleanDate, '%I:%M %p')
 	saveDate = datetime.datetime(year, month, day, gameTime.hour, gameTime.minute)
 	return saveDate
 #

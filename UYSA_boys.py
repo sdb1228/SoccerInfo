@@ -296,7 +296,7 @@ def getFieldId(field, cursor, connection):
 #
 def parseScores(gameRow):
 	homeTeamScore = gameRow.findChildren()[8].contents[0]
-	awayTeamScore = gameRow.findChildren()[11].contents[0]
+	awayTeamScore = gameRow.findChildren()[-1].contents[0]
 	homeTeamScore = "".join(homeTeamScore.split())
 	awayTeamScore = "".join(awayTeamScore.split())
 	if len(homeTeamScore) == 0 or len(awayTeamScore) == 0:
@@ -334,7 +334,14 @@ def parseDate(date, time):
 	day = int(day)
 	year = "20" + neededDate[6] + neededDate[7]
 	year = int(year)
-	gameTime = datetime.datetime.strptime(neededDate[9:], '%I:%M %p')
+	cleanDate = neededDate[9:]
+	cleanDate = cleanDate.lstrip()
+	cleanDate = cleanDate.rstrip()
+	cleanDate = cleanDate.replace("&bbsp", "")
+	cleanDate = cleanDate.replace("&sbsp", "")
+	cleanDate = cleanDate.replace("sbsp;", "")
+	cleanDate = cleanDate.replace("bbsp;", "")
+	gameTime = datetime.datetime.strptime(cleanDate, '%I:%M %p')
 	saveDate = datetime.datetime(year, month, day, gameTime.hour, gameTime.minute)
 	return saveDate
 #
