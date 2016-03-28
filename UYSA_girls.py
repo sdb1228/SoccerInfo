@@ -224,6 +224,11 @@ def parseTable(gamesTable, date, teamsHash):
 def parseField(field):
 	field = field.lstrip()
 	field = field.rstrip()
+	field = field.replace("&bbsp", "")
+	field = field.replace("&sbsp", "")
+	field = field.replace("sbsp;", "")
+	field = field.replace("bbsp;", "")
+	field = field.replace(";", "")
 	if field == "TBD":
 		return None
 	return field

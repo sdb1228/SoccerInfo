@@ -16,6 +16,31 @@ months = {
         'December': '12',
 }
 #
+# Update the fields to make them look pretty
+#
+#
+def updateFields():
+	connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
+	cursor = connection.cursor()
+	selectQuery = """SELECT id, name FROM "fields"; """
+	cursor.execute(selectQuery)
+	fields = cursor.fetchall()
+	# fields = [x[1] for x in fields]
+	for field in fields:
+		replaceField = field[1].lstrip()
+		replaceField = replaceField.rstrip()
+		replaceField = replaceField.replace("&bbsp", "")
+		replaceField = replaceField.replace("&sbsp", "")
+		replaceField = replaceField.replace("sbsp;", "")
+		replaceField = replaceField.replace("bbsp;", "")
+		replaceField = replaceField.replace(";", "")
+		updateQuery = """UPDATE "fields" SET  "name" = %s WHERE "id" = %s; """
+		updateData = (replaceField, field[0])
+		cursor.execute(updateQuery, updateData)
+		connection.commit()
+		print replaceField
+
+#
 # To be run BEFORE 'UYSABoysGamesUpdate()'
 # Scrapes the UYSA site for the teamId, name, and division and puts it into the parse DB
 #
@@ -226,6 +251,11 @@ def parseTable(gamesTable, date, teamsHash):
 def parseField(field):
 	field = field.lstrip()
 	field = field.rstrip()
+	field = field.replace("&bbsp", "")
+	field = field.replace("&sbsp", "")
+	field = field.replace("sbsp;", "")
+	field = field.replace("bbsp;", "")
+	field = field.replace(";", "")
 	if field == "TBD":
 		return None
 	return field
