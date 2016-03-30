@@ -298,18 +298,27 @@ def getFieldId(field, cursor, connection):
 # Will parse and validate the scores on the game row
 #
 def parseScores(gameRow):
-	homeTeamScore = gameRow.findChildren()[8].contents[0]
-	awayTeamScore = gameRow.findChildren()[-1].contents[0]
-	homeTeamScore = "".join(homeTeamScore.split())
-	awayTeamScore = "".join(awayTeamScore.split())
-	if len(homeTeamScore) == 0 or len(awayTeamScore) == 0:
-		homeTeamScore = None
-		awayTeamScore = None
-	else:
+	try:
+		homeTeamScore = gameRow.findChildren()[8].contents[0]
+		awayTeamScore = gameRow.findChildren()[-1].contents[0]
+		homeTeamScore = "".join(homeTeamScore.split())
+		awayTeamScore = "".join(awayTeamScore.split())
+		if len(homeTeamScore) == 0 or len(awayTeamScore) == 0:
+			homeTeamScore = None
+			awayTeamScore = None
+		else:
+			awayTeamScore = int(awayTeamScore)
+			homeTeamScore = int(homeTeamScore)
+
+		return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
+	except Exception, e:
+		print str(e)
+		homeTeamScore = gameRow.findChildren()[10].contents[0]
+		awayTeamScore = gameRow.findChildren()[-2].contents[0]
 		awayTeamScore = int(awayTeamScore)
 		homeTeamScore = int(homeTeamScore)
+		return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
 
-	return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
 
 #
 # Will parse the teams and put them into a hash
@@ -360,8 +369,8 @@ def insertTeam(connection, cursor, teamId, facility, division, name):
 # Single method to combine all update methods for UYSA girls facility.
 #
 def UYSAGirls_run():
-	dryscrape.start_xvfb()
-	UYSAGirlsTeamUpdate()
+	# dryscrape.start_xvfb()
+	# UYSAGirlsTeamUpdate()
  	UYSAGirlsGamesUpdate()
 
 
