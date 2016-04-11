@@ -325,18 +325,26 @@ def getFieldId(field, cursor, connection):
 # Will parse and validate the scores on the game row
 #
 def parseScores(gameRow):
-	homeTeamScore = gameRow.findChildren()[8].contents[0]
-	awayTeamScore = gameRow.findChildren()[-1].contents[0]
-	homeTeamScore = "".join(homeTeamScore.split())
-	awayTeamScore = "".join(awayTeamScore.split())
-	if len(homeTeamScore) == 0 or len(awayTeamScore) == 0:
-		homeTeamScore = None
-		awayTeamScore = None
-	else:
-		awayTeamScore = int(awayTeamScore)
-		homeTeamScore = int(homeTeamScore)
+  try:
+    homeTeamScore = gameRow.findChildren()[8].contents[0]
+    awayTeamScore = gameRow.findChildren()[-1].contents[0]
+    homeTeamScore = "".join(homeTeamScore.split())
+    awayTeamScore = "".join(awayTeamScore.split())
+    if len(homeTeamScore) == 0 or len(awayTeamScore) == 0:
+      homeTeamScore = None
+      awayTeamScore = None
+    else:
+      awayTeamScore = int(awayTeamScore.replace("&bbsp;",""))
+      homeTeamScore = int(homeTeamScore.replace("&bbsp;",""))
 
-	return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
+    return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
+  except Exception, e:
+    print str(e)
+    homeTeamScore = gameRow.findChildren()[10].contents[0]
+    awayTeamScore = gameRow.findChildren()[-2].contents[0]
+    awayTeamScore = int(awayTeamScore)
+    homeTeamScore = int(homeTeamScore)
+    return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
 
 #
 # Will parse the teams and put them into a hash
