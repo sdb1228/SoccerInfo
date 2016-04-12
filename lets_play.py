@@ -22,7 +22,7 @@ def teamUpdate(id, connection, cursor):
 
       season = divisionArray[1]
 
-      selectQuery = """SELECT * FROM "teams" WHERE teamid='{0}' AND facility=6; """.format(str(id))
+      selectQuery = """SELECT id FROM "teams" WHERE teamid='{0}' AND facility=6; """.format(str(id))
       cursor.execute(selectQuery)
       team = cursor.fetchone()
       if team is not None:
@@ -146,7 +146,7 @@ def gamesUpdate(teamId, connection, cursor):
             reschedule_calculator(games, teamId, cursor, connection)
             rescheduled_ran = True
           
-          gamesSelectQuery = """SELECT * FROM "games" WHERE awayTeam=%s AND homeTeam=%s AND gamesdatetime=%s AND field = %s;"""
+          gamesSelectQuery = """SELECT id FROM "games" WHERE awayTeam=%s AND homeTeam=%s AND gamesdatetime=%s AND field = %s;"""
           gamesSelectData = (awayTeam, homeTeam, saveDate, DBfield)
           cursor.execute(gamesSelectQuery, gamesSelectData)
           game = cursor.fetchone()
