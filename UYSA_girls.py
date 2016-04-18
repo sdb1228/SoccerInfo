@@ -303,6 +303,8 @@ def parseScores(gameRow):
     awayTeamScore = gameRow.findChildren()[-1].contents[0]
     homeTeamScore = "".join(homeTeamScore.split())
     awayTeamScore = "".join(awayTeamScore.split())
+    if awayTeamScore.strip() == "CC":
+    	awayTeamScore = gameRow.findChildren()[-2].contents[0]
     if len(homeTeamScore) == 0 or len(awayTeamScore) == 0:
       homeTeamScore = None
       awayTeamScore = None

@@ -342,6 +342,10 @@ def parseScores(gameRow):
     print str(e)
     homeTeamScore = gameRow.findChildren()[10].contents[0]
     awayTeamScore = gameRow.findChildren()[-2].contents[0]
+
+    if len(homeTeamScore.string.strip()) == 0:
+    	homeTeamScore = gameRow.findChildren()[10].findChildren()[0].contents[0]
+    
     awayTeamScore = int(awayTeamScore)
     homeTeamScore = int(homeTeamScore)
     return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
@@ -395,6 +399,6 @@ def insertTeam(connection, cursor, teamId, facility, division, name):
 # Single method to combine all update methods for UYSA facility.
 #
 def UYSABoys_run():
-	dryscrape.start_xvfb()
-	UYSABoysTeamUpdate()
+	# dryscrape.start_xvfb()
+	# UYSABoysTeamUpdate()
 	UYSABoysGamesUpdate()
