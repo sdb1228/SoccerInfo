@@ -153,7 +153,7 @@ def gamesUpdate(teamId, connection, cursor):
           if game is not None:
             print "Updating"
             updateQuery = """UPDATE "games" SET  "awayteam"=%s, "hometeam"=%s,"gamesdatetime"=%s, "field"=%s,"hometeamscore"=%s, "awayteamscore"=%s WHERE "id" = %s ; """
-            updateData = (awayTeam, homeTeam, saveDate, int(DBfield), homeTeamScore, awayTeamScore, game[6])
+            updateData = (awayTeam, homeTeam, saveDate, int(DBfield), homeTeamScore, awayTeamScore, game[0])
             cursor.execute(updateQuery, updateData)
             updating = True
 
