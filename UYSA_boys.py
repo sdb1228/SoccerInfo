@@ -1,6 +1,7 @@
 from lxml import html
 from bs4 import BeautifulSoup
-import requests,json,httplib,urllib,sys,dryscrape,time,psycopg2, datetime, slack
+import requests,json,httplib,urllib,sys,dryscrape,time,psycopg2, datetime
+from slack import draft_slack_message
 months = {
         'January': '01',
         'February': '02',

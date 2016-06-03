@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-import requests,json,httplib,sys,dryscrape,urllib,time, datetime, psycopg2, slack
+import requests,json,httplib,sys,dryscrape,urllib,time, datetime, psycopg2
+from slack import draft_slack_message
 
 #
 # To be run before 'fullGameListUpdate()' to seed iterable data.

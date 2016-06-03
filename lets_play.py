@@ -1,5 +1,6 @@
 from lxml import html
-import requests,json,httplib,urllib,time, psycopg2, datetime, slack
+import requests,json,httplib,urllib,time, psycopg2, datetime
+from slack import draft_slack_message
 
 #
 # Adds the team data for a given teamId.

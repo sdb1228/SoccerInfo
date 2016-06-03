@@ -1,6 +1,7 @@
 from lxml import html
 from bs4 import BeautifulSoup
-import requests,json,httplib,urllib,sys,dryscrape,time, psycopg2, slack
+import requests,json,httplib,urllib,sys,dryscrape,time, psycopg2
+from slack import draft_slack_message
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
