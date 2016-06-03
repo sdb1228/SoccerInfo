@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import requests,json,httplib,sys,dryscrape,urllib,time, datetime, psycopg2
+import requests,json,httplib,sys,dryscrape,urllib,time, datetime, psycopg2, slack
 
 #
 # To be run before 'fullGameListUpdate()' to seed iterable data.
@@ -91,6 +91,7 @@ def youthTeamListUpdate():
 
 			except Exception, e:
 				print str(e)
+				draft_slack_message("Soccer City", "failed", str(e))
 				continue
 #
 # To be run before 'fullGameListUpdate()' to seed iterable data.
@@ -193,6 +194,7 @@ def teamListUpdate():
                 continue
               else:
                 print "There was a failure in teamListUpdate() for SoccerCity, could not resolve after 5 attempts, aborting..."
+                draft_slack_message("Soccer City", "failed", str(e))
                 break
             break
 
@@ -353,6 +355,7 @@ def fullGameListUpdate():
                 continue
               else:
                 print "There was a failure in fullGameListUpdate() in SoccerCity, could not resolve after 5 attempts, aborting..."
+                draft_slack_message("Soccer City", "failed", str(e))
                 break
             break
 
@@ -386,4 +389,5 @@ def lets_play_run():
 	# youthTeamListUpdate()
 	teamListUpdate()
 	fullGameListUpdate()
+	draft_slack_message("Soccer City", "success")
 

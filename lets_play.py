@@ -1,5 +1,5 @@
 from lxml import html
-import requests,json,httplib,urllib,time, psycopg2, datetime
+import requests,json,httplib,urllib,time, psycopg2, datetime, slack
 
 #
 # Adds the team data for a given teamId.
@@ -47,6 +47,7 @@ def teamUpdate(id, connection, cursor):
         time.sleep(5)
         continue
       else:
+        draft_slack_message("Let's Play", "failed", str(e))
         print "There was a failure in teamListUpdate(), could not resolve after 5 attempts, aborting..."
         return
     break
@@ -184,6 +185,7 @@ def gamesUpdate(teamId, connection, cursor):
         time.sleep(5)
         continue
       else:
+        draft_slack_message("Let's Play", "failed", str(e))
         print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
         return
     break
@@ -248,3 +250,4 @@ def lets_play_run():
   teamListUpdate()
   fullGameListUpdate()
   #gamesUpdate()
+  draft_slack_message("Let's Play", "success")

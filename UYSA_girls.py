@@ -1,6 +1,6 @@
 from lxml import html
 from bs4 import BeautifulSoup
-import requests,json,httplib,urllib,sys,dryscrape,time,psycopg2, datetime
+import requests,json,httplib,urllib,sys,dryscrape,time,psycopg2, datetime, slack
 months = {
         'January': '01',
         'February': '02',
@@ -69,6 +69,7 @@ def UYSAGirlsTeamUpdate():
 				connection.commit()
 	except Exception, e:
 		print str(e)	
+		draft_slack_message("UYSA Girls", "failed", str(e))
 
 
 #
@@ -127,6 +128,7 @@ def UYSAGirlsGamesUpdate():
 					
 	except Exception, e:
 	    print str(e)
+	    draft_slack_message("UYSA Girls", "failed", str(e))
 	    return
 #
 # Will determine if the dates and the games table counts match
@@ -374,6 +376,7 @@ def UYSAGirls_run():
 	dryscrape.start_xvfb()
 	UYSAGirlsTeamUpdate()
  	UYSAGirlsGamesUpdate()
+	draft_slack_message("UYSA Girls", "success")
 
 
 def fields():

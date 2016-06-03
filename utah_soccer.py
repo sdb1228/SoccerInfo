@@ -1,6 +1,6 @@
 from lxml import html
 from bs4 import BeautifulSoup
-import requests,json,httplib,urllib,sys,dryscrape,time, psycopg2
+import requests,json,httplib,urllib,sys,dryscrape,time, psycopg2, slack
 
 applicationId = "UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv"
 apiKey = "g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b"
@@ -102,6 +102,7 @@ def utahSoccerAdultOutdoorTeamsUpdate():
           continue
         else:
           print "There was a failure in teamListUpdate(), could not resolve after 5 attempts, aborting..."
+          draft_slack_message("Utah Soccer", "failed", str(e))
           return
       break
 
@@ -235,6 +236,7 @@ def utahSoccerAdultPlayedOutdoorGamesUpdate():
         print results
         break
       except Exception, e:
+        draft_slack_message("Utah Soccer", "failed", str(e))
         print str(e)
         break
 
@@ -386,6 +388,7 @@ def utahSoccerAdultOutdoorGamesUpdate():
         connection.connect()
         continue
       else:
+        draft_slack_message("Utah Soccer", "failed", str(e))
         print "There was a failure in gameUpdate(), could not resolve after 5 attempts, aborting..."
         return
     break
@@ -397,3 +400,4 @@ def utah_soccer_run():
   utahSoccerAdultOutdoorTeamsUpdate()
   utahSoccerAdultPlayedOutdoorGamesUpdate()
   utahSoccerAdultOutdoorGamesUpdate()
+  draft_slack_message("Utah Soccer", "success")
