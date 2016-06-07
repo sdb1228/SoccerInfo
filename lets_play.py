@@ -2,7 +2,6 @@ from lxml import html
 import requests,json,httplib,urllib,time, psycopg2, datetime, os
 from slack import draft_slack_message
 
-
 is_test = os.environ.get('TEST') == "1"
 if is_test:
   db_host = 'postgres'
