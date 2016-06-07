@@ -1,6 +1,19 @@
 from lxml import html
-import requests,json,httplib,urllib,time, psycopg2, datetime
+import requests,json,httplib,urllib,time, psycopg2, datetime, os
 from slack import draft_slack_message
+
+
+is_test = os.environ.get('TEST') == "1"
+if is_test:
+  db_host = 'postgres'
+  connection = psycopg2.connect(host=db_host,database='Soccer_Games',user='dburnett',password='doug1')
+  cursor = connection.cursor()
+
+  create_team_query  = """CREATE TABLE IF NOT EXISTS teams(id SERIAL, name TEXT, division TEXT, teamid TEXT, facility INT, PRIMARY KEY(id));"""
+  create_games_query = """CREATE TABLE IF NOT EXISTS games(id SERIAL, awayteam TEXT, hometeam TEXT, gamesdatetime TEXT, field TEXT, hometeamscore INT, awayteamscore INT, PRIMARY KEY(id));
+  cursor.execute(create_team_query);"""
+else:
+  db_host = 'localhost'
 
 #
 # Adds the team data for a given teamId.
@@ -57,8 +70,9 @@ def teamUpdate(id, connection, cursor):
 # To be run before 'fullGameListUpdate()' to seed iterable data.
 #
 def teamListUpdate():
-  connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
+  connection = psycopg2.connect(host=db_host,database='Soccer_Games',user='dburnett',password='doug1')
   cursor = connection.cursor()
+
   page = requests.get('http://www.letsplaysoccer.com/facilities/12/teams')
   tree = html.fromstring(page.text)
   # array of teams
@@ -236,8 +250,9 @@ def reschedule_calculator(games, teamId, cursor, connection):
 # To be run AFTER 'teamListUpdate()'
 #
 def fullGameListUpdate():
-  connection = psycopg2.connect(host='localhost',database='Soccer_Games',user='dburnett',password='doug1')
+  connection = psycopg2.connect(host=db_host,database='Soccer_Games',user='dburnett',password='doug1')
   cursor = connection.cursor()
+
   selectQuery = """SELECT * FROM "teams" WHERE facility=6; """
   cursor.execute(selectQuery)
   teams = cursor.fetchall()
