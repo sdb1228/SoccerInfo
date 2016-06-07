@@ -18,7 +18,7 @@ def teamUpdate(id, connection, cursor):
       divisionArray = divisionHeader.split(' ')
       if len(divisionArray) < 7:
         division = divisionArray[5]
-      else: 
+      else:
         division = divisionArray[5] + divisionArray[6]
 
       season = divisionArray[1]
@@ -41,7 +41,7 @@ def teamUpdate(id, connection, cursor):
       connection.commit()
 
     except Exception, e:
-      print str(e)   
+      print str(e)
       retries += 1
       if retries < 5:
         print "Error retry %s..." % retries
@@ -83,7 +83,7 @@ def gamesUpdate(teamId, connection, cursor):
       # array of games
       # this is the old version.  Keep here just incase
       # games = tree.xpath("//tr[td]")
-      
+
       if len(tree.xpath("//table[1]")) == 0:
         print "No games for teams yet"
         break
@@ -103,7 +103,7 @@ def gamesUpdate(teamId, connection, cursor):
           field = children[1].text.strip()
           homeTeam = children[2].getchildren()[0]
           awayTeam = children[3].getchildren()[0]
-          
+
           awayTeam = awayTeam.attrib['href'].split('/')[-1]
           homeTeam = homeTeam.attrib['href'].split('/')[-1]
 
@@ -121,7 +121,7 @@ def gamesUpdate(teamId, connection, cursor):
             print "No Team Updating Now"
             teamUpdate(homeTeam, connection, cursor)
 
-          score = "".join(children[4].text.split()).split("-") 
+          score = "".join(children[4].text.split()).split("-")
           if score[0]:
             homeTeamScore = int(score[0])
             awayTeamScore = int(score[1])
@@ -143,11 +143,11 @@ def gamesUpdate(teamId, connection, cursor):
             print field
             continue
           DBfield = DBfield[0]
-          
+
           if not rescheduled_ran:
             reschedule_calculator(games, teamId, cursor, connection)
             rescheduled_ran = True
-          
+
           gamesSelectQuery = """SELECT id FROM "games" WHERE awayTeam=%s AND homeTeam=%s AND gamesdatetime=%s AND field = %s;"""
           gamesSelectData = (awayTeam, homeTeam, saveDate, DBfield)
           cursor.execute(gamesSelectQuery, gamesSelectData)
@@ -195,8 +195,8 @@ def gamesUpdate(teamId, connection, cursor):
 # Calculates which games are reschedules and delete the ones that aren't correct
 def reschedule_calculator(games, teamId, cursor, connection):
   ourGamesQuery = """SELECT f1.name AS field, f1.address AS address, games.hometeam AS hometeam, games.awayteam AS awayteam, games.gamesdatetime, games.hometeamscore, games.awayteamscore, games.id 
-  FROM games 
-  INNER JOIN fields f1 ON f1.id=games.field 
+  FROM games
+  INNER JOIN fields f1 ON f1.id=games.field
   WHERE games.awayteam='""" + teamId + """' OR games.hometeam='""" + teamId + """' ORDER BY games.gamesdatetime LIMIT 10;"""
   cursor.execute(ourGamesQuery)
   ourGames = cursor.fetchall()
@@ -227,11 +227,11 @@ def reschedule_calculator(games, teamId, cursor, connection):
 
   print len(gameCopy)
   if gameCopy:
-    for deleteGame in gameCopy:      
+    for deleteGame in gameCopy:
       deleteQuery = """ DELETE FROM games WHERE id='{0}';""".format(deleteGame[-1])
       cursor.execute(deleteQuery)
- 
-    
+
+
 #
 # To be run AFTER 'teamListUpdate()'
 #
@@ -250,5 +250,4 @@ def fullGameListUpdate():
 def lets_play_run():
   teamListUpdate()
   fullGameListUpdate()
-  #gamesUpdate()
   draft_slack_message("Let's Play", "success")

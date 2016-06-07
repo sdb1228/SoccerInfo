@@ -224,7 +224,7 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 		        'Nov': '11',
 		        'Dec': '12'
 			}
-			teamNameWithoutSpace = teamName.replace(u' ', '%20') 
+			teamNameWithoutSpace = teamName.replace(u' ', '%20')
 			url="http://soccer-city-utah.ezleagues.ezfacility.com/teams/" + teamId + "/" + teamNameWithoutSpace + ".aspx?framed=1"
 			print url
 			try:
@@ -232,7 +232,7 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 			except Exception, e:
 				print "COULDN'T GET " + teamName + " GAMES"
 				return
-			
+
 			print "after url"
 			soup = BeautifulSoup(session.body())
 			errorMessage = soup.findAll("div", {"id": "ErrorMessage"})
@@ -241,7 +241,7 @@ def gamesUpdate(teamId, teamName, session, cursor, connection):
 			else:
 				print errorMessage
 				return
-				
+
 			gamesTable = soup.findAll("table", {"id": "ctl00_C_Schedule1_GridView1"})
 			games = gamesTable[0].findAll("tr")
 			del games[0]

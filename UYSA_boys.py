@@ -59,7 +59,7 @@ def UYSABoysTeamUpdate():
 	try:
 	    for league in leauges:
 			leagueUrl = "http://uysa.affinitysoccer.com/tour/public/info/" + league['href']
-			
+
 
 			bracketSession.visit(leagueUrl)
 			soup2 = BeautifulSoup(bracketSession.body())
@@ -152,7 +152,7 @@ def UYSABoysGamesUpdate():
 
 				err = insertOrUpdateGames(games, cursor, connection)
 				tableCount += 1
-				
+
 	except Exception, e:
 		draft_slack_message("UYSA Boys", "failed", str(e))
 		print str(e)
@@ -239,14 +239,14 @@ def parseTable(gamesTable, date, teamsHash):
 			print "Scores could not be parsed correctly"
 			continue
 
-		games.append({"homeTeam": teams.get("homeTeam"), 
-				"awayTeam": teams.get("awayTeam"), 
-				"homeTeamScore": scores.get("homeTeamScore"), 
-				"awayTeamScore": scores.get("awayTeamScore"), 
-				"dateTime": saveDate, 
+		games.append({"homeTeam": teams.get("homeTeam"),
+				"awayTeam": teams.get("awayTeam"),
+				"homeTeamScore": scores.get("homeTeamScore"),
+				"awayTeamScore": scores.get("awayTeamScore"),
+				"dateTime": saveDate,
 				"field": field})
 	return games
-		
+
 
 #
 # Makes the field look pretty
@@ -293,7 +293,7 @@ def gameExists(game, cursor, connection):
 		return True
 	return False
 
-	
+
 def insertGame(game, cursor, connection):
 	field = getFieldId(game.get("field"), cursor, connection)
 	print "Inserting"
@@ -348,7 +348,7 @@ def parseScores(gameRow):
 
     if len(homeTeamScore.string.strip()) == 0:
     	homeTeamScore = gameRow.findChildren()[10].findChildren()[0].contents[0]
-    
+
     awayTeamScore = int(awayTeamScore)
     homeTeamScore = int(homeTeamScore)
     return {"homeTeamScore": homeTeamScore, "awayTeamScore": awayTeamScore}
@@ -364,7 +364,7 @@ def parseTeams(gameRow, teamsHash):
 		print "ERROR NO TEAMS"
 		return None
 	return {"homeTeam": homeTeam, "awayTeam": awayTeam}
-	
+
 #
 # Makes the date look pretty
 #
@@ -398,7 +398,7 @@ def insertTeam(connection, cursor, teamId, facility, division, name):
 	insertData = (name, division, teamId, facility)
 	cursor.execute(insertQuery, insertData)
 
-# 
+#
 # Single method to combine all update methods for UYSA facility.
 #
 def UYSABoys_run():

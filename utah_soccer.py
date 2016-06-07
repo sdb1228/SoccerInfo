@@ -24,12 +24,12 @@ def utahSoccerTeamDivisionUpdate(teamIds, division, connection):
          "X-Parse-REST-API-Key": apiKey,
      })
     results = json.loads(connection.getresponse().read())
-    # Object doesn't exist, POST to create new. 
+    # Object doesn't exist, POST to create new.
 
     if results.values() == [[]]:
       return
     # Object exists, PUT to update existing.
-    else: 
+    else:
        call = 'PUT'
        # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
        objId = '/%s' % results['results'][0]['objectId']
@@ -71,13 +71,13 @@ def utahSoccerAdultOutdoorTeamsUpdate():
                "X-Parse-REST-API-Key": apiKey,
              })
         results = json.loads(connection.getresponse().read())
-        # Object doesn't exist, POST to create new. 
+        # Object doesn't exist, POST to create new.
 
         if results.values() == [[]]:
            call = 'POST'
            objId = ''
         # Object exists, PUT to update existing.
-        else: 
+        else:
            call = 'PUT'
            # Better way to obtain objectID for update?  (nested dictionary/array/dictionary is ugly!  Stupid Python...)
            objId = '/%s' % results['results'][0]['objectId']
