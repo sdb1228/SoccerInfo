@@ -9,8 +9,9 @@ if is_test:
   cursor = connection.cursor()
 
   create_team_query  = """CREATE TABLE IF NOT EXISTS teams(id SERIAL, name TEXT, division TEXT, teamid TEXT, facility INT, PRIMARY KEY(id));"""
-  create_games_query = """CREATE TABLE IF NOT EXISTS games(id SERIAL, awayteam TEXT, hometeam TEXT, gamesdatetime TEXT, field TEXT, hometeamscore INT, awayteamscore INT, PRIMARY KEY(id));
-  cursor.execute(create_team_query);"""
+  create_games_query = """CREATE TABLE IF NOT EXISTS games(id SERIAL, awayteam TEXT, hometeam TEXT, gamesdatetime TEXT, field TEXT, hometeamscore INT, awayteamscore INT, PRIMARY KEY(id));"""
+  cursor.execute(create_team_query)
+  connection.commit()
 else:
   db_host = 'localhost'
 
